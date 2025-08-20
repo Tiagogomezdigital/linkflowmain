@@ -160,3 +160,35 @@ export async function registerClick(clickData: {
     throw error
   }
 }
+
+export async function checkSlugAvailability(slug: string, excludeId?: string): Promise<boolean> {
+  try {
+    let query = supabase.from("groups").select("id").eq("slug", slug)
+    
+    if (excludeId) {
+      query = query.neq("id", excludeId)
+    }
+    
+    const { data, error } = await query.single()
+
+    if (error) {
+      // Se o erro for "PGRST116" significa que não encontrou nenhum registro, então o slug está disponível
+      if (error.code === "PGRST116") {
+        return true
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("Error checking slug availability:", error)
+      }
+      throw error
+    }
+
+    // Se encontrou um registro, o slug não está disponível
+    return false
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error("Error in checkSlugAvailability:", error)
+    }
+    // Em caso de erro, assumimos que o slug não está disponível por segurança
+    return false
+  }
+}

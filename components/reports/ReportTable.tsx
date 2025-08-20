@@ -25,4 +25,4 @@ export function ReportTable({ data }: ReportTableProps) {
       </tbody>
     </table>
   );
-} 
+}

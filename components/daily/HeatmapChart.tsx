@@ -39,4 +39,4 @@ export function HeatmapChart() {
       </div>
     </Card>
   )
-} 
+}

@@ -91,4 +91,4 @@ export function AddGroupDialog({ open, onOpenChange, onGroupAdded }: Props) {
       </DialogContent>
     </Dialog>
   )
-} 
+}

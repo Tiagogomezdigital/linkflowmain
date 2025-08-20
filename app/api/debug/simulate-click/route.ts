@@ -59,4 +59,4 @@ export async function GET(request: NextRequest) {
     pushLog("exception", { message: error.message, stack: verbose ? error.stack : undefined })
     return NextResponse.json({ error: error.message, logs }, { status: 500 })
   }
-} 
+}

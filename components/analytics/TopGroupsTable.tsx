@@ -23,4 +23,4 @@ export function TopGroupsTable({ groups }: TopGroupsTableProps) {
       </tbody>
     </table>
   );
-} 
+}

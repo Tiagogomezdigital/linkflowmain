@@ -50,4 +50,4 @@ export function DeviceDistributionCard() {
       </ul>
     </Card>
   )
-} 
+}

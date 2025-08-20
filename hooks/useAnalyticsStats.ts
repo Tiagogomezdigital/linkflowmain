@@ -15,4 +15,4 @@ export function useAnalyticsStats() {
   }, []);
 
   return { stats, loading, error };
-} 
+}

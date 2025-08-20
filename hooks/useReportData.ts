@@ -19,4 +19,4 @@ export function useReportData(filters: ReportFilter) {
   }, [JSON.stringify(filters)]);
 
   return { data, count, loading, error };
-} 
+}

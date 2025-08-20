@@ -31,4 +31,4 @@ export function TopGroupsTableDaily() {
       </table>
     </Card>
   )
-} 
+}

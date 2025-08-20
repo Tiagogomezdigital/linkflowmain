@@ -56,4 +56,4 @@ export interface ExportResponse {
 }
 
 export function getUltraSafeGroupAnalytics(groupId: string): Promise<AnalyticsResponse>
-export function exportUltraSafeGroupData(groupId: string): Promise<ExportResponse> 
+export function exportUltraSafeGroupData(groupId: string): Promise<ExportResponse>

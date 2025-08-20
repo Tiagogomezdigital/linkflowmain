@@ -96,4 +96,4 @@ SELECT * FROM clicks WHERE group_id = (SELECT id FROM groups WHERE slug = '<slug
       </div>
     </div>
   )
-} 
+}

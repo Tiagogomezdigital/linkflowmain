@@ -54,4 +54,4 @@ export function DateNavigator({ date, onDateChange, onPrev, onNext }: Props) {
       </div>
     </div>
   )
-} 
+}

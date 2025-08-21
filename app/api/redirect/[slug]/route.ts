@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin, supabasePublic } from "@/lib/supabase"
+import { ensureBrazilianCountryCode } from "@/lib/utils"
 
 const supabase = supabaseAdmin ?? supabasePublic
 
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       "unknown"
     const referrer = request.headers.get("referer") || ""
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`🔍 Redirecionamento via API para slug: ${slug}`)
     }
 
@@ -27,12 +28,12 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       group_slug: slug,
     })
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       console.log("📊 Resultado da função get_next_number:", { numberData, numberError })
     }
 
     if (numberError || !numberData || numberData.length === 0) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== "production") {
         console.error("❌ Erro ao buscar número:", numberError)
       }
       return NextResponse.redirect(
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 
     const { number_id, phone, final_message } = numberData[0]
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       console.log("✅ Dados obtidos:", {
         number_id,
         phone,
@@ -62,28 +63,32 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     })
 
     if (clickError) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== "production") {
         console.error("⚠️ Erro ao registrar clique:", clickError)
       }
       // Não bloquear o redirecionamento por erro de clique
     } else {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== "production") {
         console.log("✅ Clique registrado com sucesso!")
       }
     }
 
-    // Construir URL do WhatsApp
     const message = encodeURIComponent(final_message || "Olá! Vim através do link.")
-    const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${message}`
+    const phoneWithCountryCode = ensureBrazilianCountryCode(phone)
+    const whatsappUrl = `https://wa.me/${phoneWithCountryCode}?text=${message}`
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       console.log("🚀 Redirecionando para:", whatsappUrl)
+      console.log("📱 Número formatado:", {
+        original: phone,
+        withCountryCode: phoneWithCountryCode,
+      })
       console.log("💬 Mensagem final:", final_message)
     }
 
     return NextResponse.redirect(whatsappUrl)
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       console.error("💥 Erro no redirecionamento:", error)
     }
     return NextResponse.redirect(

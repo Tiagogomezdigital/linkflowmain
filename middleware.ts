@@ -6,6 +6,17 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
 
   try {
+    const path = req.nextUrl.pathname
+
+    const isRedirectRoute = path.startsWith("/l") || path.startsWith("/redirect") || path.startsWith("/api/redirect")
+
+    if (isRedirectRoute) {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("🚀 Rota de redirecionamento - bypass do middleware auth")
+      }
+      return res
+    }
+
     // Criar cliente middleware com auth-helpers
     const supabase = createMiddlewareClient({ req, res })
 
@@ -21,12 +32,8 @@ export async function middleware(req: NextRequest) {
       hasValidUser = !!userValidation?.user && !userValidationError
     }
 
-    const path = req.nextUrl.pathname
     const isLoginRoute = path === "/login"
     const isAuthCallback = path === "/auth/callback"
-
-    // Rotas de redirecionamento público (acessíveis por qualquer pessoa)
-    const isRedirectRoute = path.startsWith("/l") || path.startsWith("/redirect") || path.startsWith("/api/redirect")
 
     // Página de erro pública
     const isErrorRoute = path === "/error"
@@ -35,10 +42,10 @@ export async function middleware(req: NextRequest) {
     const isPublicApiRoute = path.startsWith("/api/stats/filtered")
 
     // Lista consolidada de rotas que NÃO exigem autenticação
-    const isPublicRoute = isLoginRoute || isAuthCallback || isRedirectRoute || isErrorRoute || isPublicApiRoute
+    const isPublicRoute = isLoginRoute || isAuthCallback || isErrorRoute || isPublicApiRoute
 
     // Log detalhado para debug
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       console.log("🛡️ Middleware Debug:", {
         path,
         hasSession: !!session,
@@ -54,7 +61,7 @@ export async function middleware(req: NextRequest) {
 
     // Permitir callback de auth sem verificação
     if (isAuthCallback) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== "production") {
         console.log("✅ Permitindo acesso ao callback de auth")
       }
       return res
@@ -62,7 +69,7 @@ export async function middleware(req: NextRequest) {
 
     // Bloquear qualquer rota privada quando não houver sessão
     if (!isPublicRoute && !hasValidUser) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== "production") {
         console.log("❌ Acesso negado (rota privada), redirecionando para login")
       }
 
@@ -75,7 +82,7 @@ export async function middleware(req: NextRequest) {
 
     // Redirecionar se já logado e tentar acessar login
     if (isLoginRoute && hasValidUser) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== "production") {
         console.log("✅ Usuário já logado tentando acessar login, redirecionando para dashboard")
       }
 

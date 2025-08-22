@@ -5,36 +5,30 @@ import { createClient } from "@/lib/supabase"
 export async function getGroupStats(): Promise<GroupStats[]> {
   try {
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[${new Date().toISOString()}] 🔍 Buscando estatísticas dos grupos...`)
+      console.log(`[${new Date().toISOString()}] 🔍 Buscando estatísticas dos grupos via API...`)
     }
 
-    const { data, error } = await supabase.rpc("get_group_stats")
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error(`[${new Date().toISOString()}] ❌ Erro ao buscar group stats:`, error)
-      }
-      throw error
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/group-stats`)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
+    
+    const result = await response.json()
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[${new Date().toISOString()}] ✅ Dados recebidos do banco:`, data)
+      console.log(`[${new Date().toISOString()}] ✅ Resposta da API:`, result)
     }
 
-    // Mapear os dados para o formato esperado
-    const mappedData = (data || []).map((item: any) => ({
-      group_id: item.group_id,
-      group_name: item.group_name,
-      group_slug: item.group_slug,
-      total_numbers: Number(item.total_numbers) || 0,
-      active_numbers: Number(item.active_numbers) || 0,
-      total_clicks: Number(item.total_clicks) || 0,
-    }))
-
+    // Extrair os dados corretamente da resposta da API
+    const data = result.success ? result.data : []
+    
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[${new Date().toISOString()}] 📊 Dados mapeados:`, mappedData)
+      console.log(`[${new Date().toISOString()}] 📊 Stats processadas:`, data?.length || 0, 'registros')
     }
-    return mappedData
+    
+    return data || []
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
       console.error(`[${new Date().toISOString()}] ❌ Erro em getGroupStats:`, error)
@@ -338,18 +332,22 @@ export async function getFilteredStats(
   try {
     console.log("🔍 Buscando estatísticas filtradas via API...", { dateFrom, dateTo, groupIds })
 
-    // Construir URL da API
-    const params = new URLSearchParams({
-      dateFrom: dateFrom.toISOString(),
-      dateTo: dateTo.toISOString(),
+    // Usar POST para evitar limitações de tamanho da URL
+    const response = await fetch('/api/stats/filtered', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        dateFrom: dateFrom.toISOString(),
+        dateTo: dateTo.toISOString(),
+        groupIds: groupIds || []
+      })
     })
 
-    if (groupIds?.length) {
-      params.set('groupIds', groupIds.join(','))
-    }
-
-    const response = await fetch(`/api/stats/filtered?${params.toString()}`)
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error("❌ Erro na resposta da API:", { status: response.status, statusText: response.statusText, errorText })
       throw new Error(`Erro na API: ${response.status} ${response.statusText}`)
     }
 

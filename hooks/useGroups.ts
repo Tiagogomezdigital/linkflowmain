@@ -1,19 +1,21 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getGroups } from "@/lib/api/groups";
 import type { Group } from "@/lib/types";
 
 export function useGroups() {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: groups = [],
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey: ['groups'],
+    queryFn: getGroups,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
 
-  useEffect(() => {
-    setLoading(true);
-    getGroups()
-      .then(setGroups)
-      .catch((err) => setError(err.message || "Erro ao buscar grupos"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  return { groups, loading, error };
+  return { 
+    groups, 
+    loading, 
+    error: error?.message || null 
+  };
 }

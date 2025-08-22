@@ -65,15 +65,15 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
   // Filtrar grupos quando o termo de pesquisa mudar
   useEffect(() => {
     if (!searchTerm) {
-      setFilteredGroups(groups)
+      setFilteredGroups(Array.isArray(groups) ? groups : [])
       return
     }
 
     const filtered = groups.filter(
       (group) =>
-        group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (group.description && group.description.toLowerCase().includes(searchTerm.toLowerCase())),
+        (group?.name && group.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (group?.slug && group.slug.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (group?.description && group.description.toLowerCase().includes(searchTerm.toLowerCase())),
     )
     setFilteredGroups(filtered)
   }, [searchTerm, groups])
@@ -81,10 +81,20 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
   const loadData = async () => {
     try {
       setIsLoading(true)
+      console.log('🔄 GroupsCards: Carregando dados...')
       const [groupsData, statsData] = await Promise.all([getGroups(), getGroupStats()])
-      setGroups(groupsData)
-      setFilteredGroups(groupsData)
+      console.log('📊 GroupsCards: Grupos carregados:', groupsData)
+      console.log('📊 GroupsCards: Tipo dos dados:', typeof groupsData, Array.isArray(groupsData))
+      console.log('📈 GroupsCards: Stats carregadas:', statsData?.length || 0)
+      
+      const processedGroups = Array.isArray(groupsData) ? groupsData : []
+      console.log('📊 GroupsCards: Grupos processados:', processedGroups.length)
+      
+      setGroups(processedGroups)
+      setFilteredGroups(processedGroups)
       setGroupStats(statsData)
+      
+      console.log('📊 GroupsCards: Estado atualizado - grupos:', processedGroups.length)
     } catch (error) {
       console.error("Error loading groups:", error)
       setGroups([])
@@ -105,12 +115,14 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
 
     try {
       setLoadingNumbers((prev) => new Set([...prev, groupId]))
-      console.log("Loading numbers for group:", groupId)
+      console.log('🔄 Carregando números para grupo:', groupId)
 
       const numbers = await getNumbersByGroupId(groupId)
-      console.log("Numbers loaded:", numbers)
+      console.log('📱 Números carregados:', numbers)
+      console.log('📱 Quantidade de números:', numbers?.length || 0)
 
       setGroupNumbers((prev) => ({ ...prev, [groupId]: numbers }))
+      console.log('📱 Estado groupNumbers atualizado:', { ...groupNumbers, [groupId]: numbers })
     } catch (error) {
       console.error("Error loading group numbers:", error)
       toast({
@@ -269,7 +281,7 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
     )
   }
 
-  if (filteredGroups.length === 0) {
+  if (!Array.isArray(filteredGroups) || filteredGroups.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="mx-auto w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center mb-4">
@@ -295,12 +307,23 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredGroups.map((group) => {
+        {(Array.isArray(filteredGroups) ? filteredGroups : []).map((group) => {
+          if (!group || !group.id) return null
           const stats = getStatsForGroup(group.id)
-          const publicUrl = `${ENV_CONFIG.SITE_URL}/l/${group.slug}`
+          const publicUrl = `${ENV_CONFIG.SITE_URL}/l/${group.slug || ''}`
           const isExpanded = expandedGroups.has(group.id)
           const numbers = groupNumbers[group.id] || []
           const isLoadingNumbers = loadingNumbers.has(group.id)
+          
+          // Debug log para números do grupo
+          if (isExpanded) {
+            console.log(`📱 Renderizando grupo ${group.name} (${group.id}):`, {
+              numbers,
+              numbersLength: numbers.length,
+              isLoadingNumbers,
+              groupNumbers: groupNumbers[group.id]
+            })
+          }
 
           return (
             <Card
@@ -310,8 +333,8 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
-                    <CardTitle className="text-xl font-semibold text-white mb-2">{group.name}</CardTitle>
-                    <p className="text-sm text-slate-400">{group.description || "Sem descrição"}</p>
+                    <CardTitle className="text-xl font-semibold text-white mb-2">{group?.name || 'Nome não disponível'}</CardTitle>
+                    <p className="text-sm text-slate-400">{group?.description || "Sem descrição"}</p>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -320,7 +343,7 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
                       className="h-8 w-8 text-slate-400 hover:text-white hover:bg-slate-700"
                       asChild
                     >
-                      <Link href={`/admin/grupos/novo?id=${group.id}`}>
+                      <Link href={`/admin/grupos/novo?id=${group?.id || ''}`}>
                         <Edit className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -338,14 +361,14 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
                 {/* Badges Info */}
                 <div className="inline-flex gap-2 mb-4">
                   <Badge
-                    variant={group.is_active ? "default" : "secondary"}
+                    variant={group?.is_active ? "default" : "secondary"}
                     className={
-                      group.is_active
+                      group?.is_active
                         ? "bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs"
                         : "bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs"
                     }
                   >
-                    {group.is_active ? "Ativo" : "Inativo"}
+                    {group?.is_active ? "Ativo" : "Inativo"}
                   </Badge>
                   <Badge className="bg-slate-600/50 text-slate-300 px-3 py-1 rounded-full text-xs">
                     {stats?.total_numbers || 0} números
@@ -355,7 +378,7 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
                 {/* Slug Badge */}
                 <div className="mb-4">
                   <Badge variant="outline" className="border-slate-600 text-slate-300 font-mono text-xs px-3 py-1">
-                    Slug: {group.slug}
+                    Slug: {group?.slug || 'N/A'}
                   </Badge>
                 </div>
               </CardHeader>
@@ -370,7 +393,7 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-lime-400 hover:text-lime-500 hover:bg-slate-700"
-                        onClick={() => copyPublicLink(group.slug)}
+                        onClick={() => copyPublicLink(group?.slug || '')}
                         title="Copiar link"
                       >
                         <Copy className="h-3 w-3" />
@@ -379,7 +402,7 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-slate-400 hover:text-white"
-                        onClick={() => openPublicLink(group.slug)}
+                        onClick={() => openPublicLink(group?.slug || '')}
                         title="Abrir link"
                       >
                         <ExternalLink className="h-3 w-3" />
@@ -423,7 +446,7 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
                     className="border-slate-600 text-slate-300 hover:bg-slate-700"
                     asChild
                   >
-                    <Link href={`/admin/grupos/${group.id}/analytics`} title="Ver Analytics">
+                    <Link href={`/admin/grupos/${group?.id || ''}/analytics`} title="Ver Analytics">
                       <BarChart3 className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -435,7 +458,7 @@ export function GroupsCards({ searchTerm = "" }: GroupsCardsProps) {
                     variant="ghost"
                     size="sm"
                     className="w-full text-slate-400 hover:text-white hover:bg-slate-700 justify-between"
-                    onClick={() => toggleExpanded(group.id)}
+                    onClick={() => toggleExpanded(group?.id || '')}
                   >
                     <span className="flex items-center gap-2">
                       <Phone className="h-4 w-4" />

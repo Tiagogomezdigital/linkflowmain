@@ -52,16 +52,32 @@ export function DateRangePicker({ dateRange, onDateRangeChange }: DateRangePicke
           defaultMonth={dateRange.from}
           selected={{ from: dateRange.from, to: dateRange.to }}
           onSelect={(range) => {
-            onDateRangeChange({
-              from: range?.from,
-              to: range?.to,
-            })
             if (range?.from && range?.to) {
+              // Ambas as datas foram selecionadas
+              onDateRangeChange({
+                from: range.from,
+                to: range.to,
+              })
               setIsOpen(false)
+            } else if (range?.from && !range?.to) {
+              // Apenas a data inicial foi selecionada
+              onDateRangeChange({
+                from: range.from,
+                to: undefined,
+              })
+            } else {
+              // Nenhuma data selecionada ou seleção foi limpa
+              onDateRangeChange({
+                from: undefined,
+                to: undefined,
+              })
             }
           }}
           numberOfMonths={2}
           className="text-white"
+          classNames={{
+            day_today: "bg-gradient-to-br from-amber-500 to-orange-500 text-white font-bold shadow-lg ring-2 ring-amber-300 ring-offset-2 ring-offset-slate-800",
+          }}
         />
       </PopoverContent>
     </Popover>

@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin, supabasePublic } from "@/lib/supabase"
+import { registerClick } from "@/lib/api/clicks"
+import { getNextNumber } from "@/lib/api/numbers"
 
 // Se service role estiver configurado, utilizamos o client admin (somente no servidor)
 const supabase = supabaseAdmin ?? supabasePublic
@@ -25,24 +27,22 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     const deviceType = userAgent.toLowerCase().includes("mobile") ? "mobile" : "desktop"
 
     // Buscar próximo número disponível
-    const { data: numberData, error: numberError } = await supabase.rpc("get_next_number", {
-      group_slug: slug,
-    })
+    const numberData = await getNextNumber(slug)
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log("📊 Resultado da função get_next_number:", { numberData, numberError })
+      console.log("📊 Resultado da função getNextNumber:", { numberData })
     }
 
-    if (numberError || !numberData || numberData.length === 0) {
+    if (!numberData) {
       if (process.env.NODE_ENV !== 'production') {
-        console.error("❌ Erro ao buscar número:", numberError)
+        console.error("❌ Erro ao buscar número para slug:", slug)
       }
       return NextResponse.redirect(
         new URL("/error", process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_LINK_BASE_URL || request.url),
       )
     }
 
-    const { number_id, phone, final_message } = numberData[0]
+    const { number_id, phone, final_message } = numberData
 
     if (process.env.NODE_ENV !== 'production') {
       console.log("✅ Dados obtidos:", {
@@ -53,34 +53,34 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       })
     }
 
-    // Registrar clique usando a função padronizada register_click
+    // Registrar clique usando a função TypeScript da interface
     if (process.env.NODE_ENV !== 'production') {
       console.log("🔍 Dados para registrar clique:", {
-        group_slug: slug,
-        number_phone: phone,
-        ip_address: ip,
-        user_agent: userAgent,
-        device_type: deviceType,
+        groupSlug: slug,
+        numberPhone: phone,
+        ipAddress: ip,
+        userAgent: userAgent,
+        deviceType: deviceType,
         referrer: referrer,
       })
     }
 
-    const { error: clickError, data: clickData } = await supabase.rpc("register_click", {
-      group_slug: slug,
-      number_phone: phone,
-      ip_address: ip,
-      user_agent: userAgent,
-      device_type: deviceType,
-      referrer: referrer,
-    })
-
-    if (clickError) {
+    try {
+      await registerClick({
+        groupSlug: slug,
+        numberPhone: phone,
+        ipAddress: ip,
+        userAgent: userAgent,
+        deviceType: deviceType,
+        referrer: referrer,
+      })
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("✅ Clique registrado com sucesso!")
+      }
+    } catch (clickError) {
       if (process.env.NODE_ENV !== 'production') {
         console.error("⚠️ Erro ao registrar clique:", JSON.stringify(clickError, null, 2))
-      }
-    } else {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log("✅ Clique registrado com sucesso!", clickData)
       }
     }
 

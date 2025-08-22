@@ -44,6 +44,9 @@ export function DateNavigator({ date, onDateChange, onPrev, onNext }: Props) {
               }}
               locale={ptBR}
               initialFocus
+              classNames={{
+                day_today: "bg-gradient-to-br from-amber-500 to-orange-500 text-white font-bold shadow-lg ring-2 ring-amber-300 ring-offset-2 ring-offset-slate-800",
+              }}
             />
           </PopoverContent>
         </Popover>

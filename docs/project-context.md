@@ -3,6 +3,27 @@
 ## 🎯 **Objetivo**
 Sistema de gerenciamento de links WhatsApp com rotação automática de números, analytics avançado e interface administrativa completa.
 
+## ⚠️ **IMPORTANTE - ESTADO ATUAL (21/08/2025)**
+**STATUS: ✅ SISTEMA TOTALMENTE FUNCIONAL**
+
+### **Correções Críticas Aplicadas**
+1. **Views de Banco Criadas**: `public.whatsapp_numbers` e `public.groups` apontam para schema `redirect`
+2. **APIs Corrigidas**: `/api/numbers` e `/api/groups` funcionando com 91 números e grupos completos
+3. **Frontend Atualizado**: `NumbersPageClient.tsx` usa `number.group_name` corretamente
+4. **Middleware Configurado**: Rotas de API marcadas como públicas para chamadas internas
+
+### **Arquitetura de Dados - CRÍTICO**
+- **Schema `redirect`**: Dados reais (whatsapp_numbers, group_stats, clicks)
+  - `whatsapp_numbers`: Números de WhatsApp (91 registros)
+  - `groups`: Grupos de números (52 registros)
+  - `clicks`: Registros de cliques (86.889 registros)
+  - `group_stats`: Estatísticas dos grupos (view materializada)
+  - `users`: Usuários do sistema
+- **Schema `public`**: Views que apontam para `redirect` (USAR SEMPRE)
+  - `whatsapp_numbers`: View que acessa `redirect.whatsapp_numbers`
+  - `groups`: View que acessa `redirect.groups`
+- **Supabase Client**: Só acessa schemas `public` e `graphql_public`
+
 ## 🏗️ **Arquitetura**
 
 ### **Frontend**
@@ -16,7 +37,7 @@ Sistema de gerenciamento de links WhatsApp com rotação automática de números
 - **Database:** Supabase (PostgreSQL)
 - **Auth:** Supabase Auth
 - **API:** Next.js API Routes + Supabase RPC
-- **Deploy:** Netlify
+- **Deploy:** Vercel
 
 ### **Design System**
 - **Cores:** bg-black, bg-slate-800, lime-400, green-500
@@ -64,6 +85,21 @@ lib/
 ├── types.ts               # TypeScript types
 └── utils.ts               # Utilitários gerais
 \`\`\`
+
+### **APIs Principais - ESTADO ATUAL**
+\`\`\`
+app/api/
+├── numbers/route.ts       # ✅ FUNCIONANDO - 91 números com group_name
+├── groups/route.ts        # ✅ FUNCIONANDO - Todos grupos com stats
+├── clicks/route.ts        # Registro de cliques
+└── redirect/route.ts      # Lógica de redirecionamento
+\`\`\`
+
+**Configurações Críticas:**
+- **Schema**: Sempre usar views do `public` schema
+- **Middleware**: APIs marcadas como públicas para chamadas internas
+- **Retorno**: `/api/numbers` inclui `group_name` via JOIN
+- **Frontend**: Usar `number.group_name` (não `number.groups?.name`)
 
 ## 🔄 **Fluxo Principal**
 

@@ -1,194 +1,174 @@
-import { supabase } from "@/lib/supabase"
 import type { Group } from "@/lib/types"
 
 export async function getGroups(): Promise<Group[]> {
   try {
-    const { data, error } = await supabase.from("groups").select("*").order("created_at", { ascending: false })
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error fetching groups:", error)
-      }
-      throw error
+    console.log('🔍 getGroups: Iniciando busca de grupos...')
+    // Use URL relativa no cliente, absoluta no servidor
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/groups`)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-
+    
+    const result = await response.json()
+    console.log('🔍 getGroups: Resposta da API:', result)
+    const data = result.success ? result.data : []
+    console.log('🔍 getGroups: Retornando dados:', data || [])
     return data || []
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in getGroups:", error)
-    }
+    console.error("Error in getGroups:", error)
     return []
   }
 }
 
 export async function getGroupById(id: string): Promise<Group | null> {
   try {
-    const { data, error } = await supabase.from("groups").select("*").eq("id", id).single()
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error fetching group:", error)
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/groups/${id}`)
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null
       }
-      throw error
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-
+    
+    const data = await response.json()
     return data
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in getGroupById:", error)
-    }
+    console.error("Error in getGroupById:", error)
     return null
   }
 }
 
 export async function getGroupBySlug(slug: string): Promise<Group | null> {
   try {
-    const { data, error } = await supabase.from("groups").select("*").eq("slug", slug).eq("is_active", true).single()
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error fetching group by slug:", error)
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/groups?slug=${slug}`)
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null
       }
-      throw error
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-
+    
+    const data = await response.json()
     return data
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in getGroupBySlug:", error)
-    }
+    console.error("Error in getGroupBySlug:", error)
     return null
   }
 }
 
-export async function createGroup(groupData: {
-  name: string
-  slug: string
-  description?: string
-  is_active: boolean
-}): Promise<Group> {
+export async function createGroup(group: Omit<Group, "id" | "created_at" | "updated_at">): Promise<Group | null> {
   try {
-    const { data, error } = await supabase.from("groups").insert([groupData]).select().single()
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error creating group:", error)
-      }
-      throw error
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/groups`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(group)
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-
+    
+    const data = await response.json()
     return data
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in createGroup:", error)
-    }
-    throw error
+    console.error("Error in createGroup:", error)
+    return null
   }
 }
 
-export async function updateGroup(id: string, updates: Partial<Group>): Promise<Group> {
+export async function updateGroup(id: string, updates: Partial<Group>): Promise<Group | null> {
   try {
-    const { data, error } = await supabase.from("groups").update(updates).eq("id", id).select().single()
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error updating group:", error)
-      }
-      throw error
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/groups/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updates)
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-
+    
+    const data = await response.json()
     return data
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in updateGroup:", error)
-    }
-    throw error
+    console.error("Error in updateGroup:", error)
+    return null
   }
 }
 
-export async function deleteGroup(id: string): Promise<void> {
+export async function deleteGroup(id: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase.from("groups").delete().eq("id", id).select()
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error deleting group:", error)
-      }
-      throw error
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/groups/${id}`, {
+      method: 'DELETE'
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    if (!data || data.length === 0) {
-      throw new Error("A exclusão falhou. Verifique as permissões ou se o grupo ainda existe.")
-    }
+    return true
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in deleteGroup:", error)
-    }
-    throw error
+    console.error("Error in deleteGroup:", error)
+    return false
   }
 }
 
-// Função que usa a função SQL register_click
 export async function registerClick(clickData: {
-  groupSlug: string
+  groupId: string
   numberPhone: string
   ipAddress?: string
   userAgent?: string
   deviceType?: string
   referrer?: string
-}): Promise<void> {
+}): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc("register_click", {
-      group_slug: clickData.groupSlug,
-      number_phone: clickData.numberPhone,
-      ip_address: clickData.ipAddress || null,
-      user_agent: clickData.userAgent || null,
-      device_type: clickData.deviceType || null,
-      referrer: clickData.referrer || null,
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/clicks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(clickData)
     })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
 
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error registering click:", error)
-      }
-      throw error
-    }
+    return true
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in registerClick:", error)
-    }
-    throw error
+    console.error("Error in registerClick:", error)
+    return false
   }
 }
 
-export async function checkSlugAvailability(slug: string, excludeId?: string): Promise<boolean> {
+export async function isSlugAvailable(slug: string, excludeId?: string): Promise<boolean> {
   try {
-    let query = supabase.from("groups").select("id").eq("slug", slug)
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const url = excludeId ? `${baseUrl}/api/groups/check-slug?slug=${slug}&excludeId=${excludeId}` : `${baseUrl}/api/groups/check-slug?slug=${slug}`
+    const response = await fetch(url)
     
-    if (excludeId) {
-      query = query.neq("id", excludeId)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
     
-    const { data, error } = await query.single()
-
-    if (error) {
-      // Se o erro for "PGRST116" significa que não encontrou nenhum registro, então o slug está disponível
-      if (error.code === "PGRST116") {
-        return true
-      }
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error checking slug availability:", error)
-      }
-      throw error
-    }
-
-    // Se encontrou um registro, o slug não está disponível
-    return false
+    const data = await response.json()
+    return data.available
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in checkSlugAvailability:", error)
-    }
-    // Em caso de erro, assumimos que o slug não está disponível por segurança
+    console.error("Error in isSlugAvailable:", error)
     return false
   }
 }

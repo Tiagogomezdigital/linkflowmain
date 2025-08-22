@@ -1,18 +1,20 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats } from "@/lib/analytics";
 
 export function useAnalyticsStats() {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: stats,
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey: ['analytics-stats'],
+    queryFn: getDashboardStats,
+    staleTime: 2 * 60 * 1000, // 2 minutos
+  });
 
-  useEffect(() => {
-    setLoading(true);
-    getDashboardStats()
-      .then((data) => setStats(data))
-      .catch((err) => setError(err.message || "Erro ao buscar métricas"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  return { stats, loading, error };
+  return { 
+    stats, 
+    loading, 
+    error: error?.message || null 
+  };
 }

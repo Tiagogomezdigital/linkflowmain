@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin, supabasePublic } from "@/lib/supabase"
 import { ensureBrazilianCountryCode } from "@/lib/utils"
+import { registerClick } from "@/lib/api/clicks"
+import { getNextNumber } from "@/lib/api/numbers"
 
 const supabase = supabaseAdmin ?? supabasePublic
 
@@ -24,24 +26,22 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     const deviceType = userAgent.toLowerCase().includes("mobile") ? "mobile" : "desktop"
 
     // Buscar próximo número disponível
-    const { data: numberData, error: numberError } = await supabase.rpc("get_next_number", {
-      group_slug: slug,
-    })
+    const numberData = await getNextNumber(slug)
 
     if (process.env.NODE_ENV !== "production") {
-      console.log("📊 Resultado da função get_next_number:", { numberData, numberError })
+      console.log("📊 Resultado da função getNextNumber:", { numberData })
     }
 
-    if (numberError || !numberData || numberData.length === 0) {
+    if (!numberData) {
       if (process.env.NODE_ENV !== "production") {
-        console.error("❌ Erro ao buscar número:", numberError)
+        console.error("❌ Erro ao buscar número para slug:", slug)
       }
       return NextResponse.redirect(
         new URL("/error", process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_LINK_BASE_URL || request.url),
       )
     }
 
-    const { number_id, phone, final_message } = numberData[0]
+    const { number_id, phone, final_message } = numberData
 
     if (process.env.NODE_ENV !== "production") {
       console.log("✅ Dados obtidos:", {
@@ -52,25 +52,25 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       })
     }
 
-    // Registrar clique usando a função padronizada register_click
-    const { error: clickError } = await supabase.rpc("register_click", {
-      group_slug: slug,
-      number_phone: phone,
-      ip_address: ip,
-      user_agent: userAgent,
-      device_type: deviceType,
-      referrer: referrer,
-    })
-
-    if (clickError) {
+    // Registrar clique usando a função TypeScript da interface
+    try {
+      await registerClick({
+        groupSlug: slug,
+        numberPhone: phone,
+        ipAddress: ip,
+        userAgent: userAgent,
+        deviceType: deviceType,
+        referrer: referrer,
+      })
+      
+      if (process.env.NODE_ENV !== "production") {
+        console.log("✅ Clique registrado com sucesso!")
+      }
+    } catch (clickError) {
       if (process.env.NODE_ENV !== "production") {
         console.error("⚠️ Erro ao registrar clique:", clickError)
       }
       // Não bloquear o redirecionamento por erro de clique
-    } else {
-      if (process.env.NODE_ENV !== "production") {
-        console.log("✅ Clique registrado com sucesso!")
-      }
     }
 
     const message = encodeURIComponent(final_message || "Olá! Vim através do link.")

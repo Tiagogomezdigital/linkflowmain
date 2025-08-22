@@ -1,9 +1,6 @@
-export const metadata = {
-  title: "Todos os Números | LinkFlow",
-  description: "Gerencie todos os números de WhatsApp cadastrados no sistema.",
-}
+'use client'
 
-import NumbersPageClient from "./NumbersPageClient"
+import NumbersPageClient from './NumbersPageClient'
 
 export default function NumbersPage() {
   return <NumbersPageClient />

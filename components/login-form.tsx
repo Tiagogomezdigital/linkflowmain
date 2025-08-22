@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Zap, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react"
-import { getSupabaseClient } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
 export function LoginForm() {
@@ -18,7 +17,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
-  const supabase = getSupabaseClient()
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,37 +35,44 @@ export function LoginForm() {
 
     try {
       if (process.env.NODE_ENV !== 'production') {
-        console.log("🔐 Iniciando login com auth-helpers...")
+        console.log("🔐 Iniciando login com autenticação customizada...")
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim(),
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.trim(),
+        }),
       })
+
+      const result = await response.json()
 
       if (process.env.NODE_ENV !== 'production') {
         console.log("📊 Resultado do login:", {
-          success: !error,
-          hasUser: !!data?.user,
-          hasSession: !!data?.session,
-          userId: data?.user?.id,
-          error: error?.message,
+          success: result.success,
+          hasUser: !!result.user,
+          userId: result.user?.id,
+          error: result.error,
         })
       }
 
-      if (error) {
+      if (!response.ok || !result.success) {
         if (process.env.NODE_ENV !== 'production') {
-          console.error("❌ Erro de login:", error)
+          console.error("❌ Erro de login:", result.error)
         }
         toast({
           variant: "destructive",
           title: "Erro no login",
-          description: error.message === "Invalid login credentials" ? "Credenciais inválidas" : error.message,
+          description: result.error || "Credenciais inválidas",
         })
         return
       }
 
-      if (data?.user && data?.session) {
+      if (result.success && result.user) {
         if (process.env.NODE_ENV !== 'production') {
           console.log("✅ Login bem-sucedido! Sessão criada.")
         }
@@ -76,7 +82,7 @@ export function LoginForm() {
           description: "Redirecionando para o dashboard...",
         })
 
-        // Aguardar um pouco para garantir que a sessão foi salva
+        // Aguardar um pouco para garantir que o cookie foi definido
         await new Promise((resolve) => setTimeout(resolve, 500))
 
         // Refresh do router para atualizar o estado de auth
@@ -90,12 +96,12 @@ export function LoginForm() {
 
       // Se chegou aqui, algo deu errado
       if (process.env.NODE_ENV !== 'production') {
-        console.error("❌ Login sem erro mas sem sessão válida")
+        console.error("❌ Login sem erro mas sem usuário válido")
       }
       toast({
         variant: "destructive",
         title: "Erro inesperado",
-        description: "Login realizado mas sessão não foi criada",
+        description: "Login realizado mas usuário não foi autenticado",
       })
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {

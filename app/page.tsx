@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { getSupabaseClient } from "@/lib/supabase"
 
 export default function HomePage() {
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
-  const supabase = getSupabaseClient()
+
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -16,21 +15,24 @@ export default function HomePage() {
           console.log("🏠 Página inicial - Verificando autenticação...")
         }
 
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        const result = await response.json()
 
         if (process.env.NODE_ENV !== 'production') {
           console.log("🔍 Verificando sessão na página inicial:", {
-            hasSession: !!session,
-            hasUser: !!session?.user,
-            userId: session?.user?.id,
+            success: result.success,
+            hasUser: !!result.user,
+            userId: result.user?.id,
             environment: process.env.NODE_ENV,
             url: typeof window !== "undefined" ? window.location.href : "SSR",
           })
         }
 
-        if (session?.user) {
+        if (response.ok && result.success && result.user) {
           if (process.env.NODE_ENV !== 'production') {
             console.log("✅ Usuário logado, redirecionando para dashboard")
           }
@@ -52,7 +54,7 @@ export default function HomePage() {
     }
 
     checkAuth()
-  }, [router, supabase.auth])
+  }, [router])
 
   if (isChecking) {
     return (

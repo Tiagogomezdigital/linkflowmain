@@ -26,18 +26,21 @@ export function getSupabaseClient() {
 // Cliente principal exportado (singleton)
 export const supabase = getSupabaseClient()
 
+
+
 // Cliente alternativo para operações que não precisam de auth
-export const supabasePublic = createSupabaseClient(supabaseUrl || "", supabaseAnonKey || "", {
+const _supabasePublic = createSupabaseClient(supabaseUrl || "", supabaseAnonKey || "", {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
   },
 })
+export const supabasePublic = _supabasePublic
 
 // Cliente admin para operações que requerem privilégios elevados
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-export const supabaseAdmin = supabaseServiceKey
+const _supabaseAdmin = supabaseServiceKey
   ? createSupabaseClient(supabaseUrl || "", supabaseServiceKey, {
       global: {
         headers: {
@@ -51,6 +54,8 @@ export const supabaseAdmin = supabaseServiceKey
       },
     })
   : null
+
+export const supabaseAdmin = _supabaseAdmin
 
 // Função para verificar se a API key está sendo enviada corretamente
 export async function checkApiKey() {

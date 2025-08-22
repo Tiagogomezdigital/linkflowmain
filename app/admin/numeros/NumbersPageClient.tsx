@@ -34,8 +34,10 @@ import { ChevronsUpDown, Check } from "lucide-react"
 import { AddGlobalNumberDialog } from "@/components/add-global-number-dialog"
 
 export default function NumbersPageClient() {
+  console.log('🎯 NumbersPageClient renderizado no cliente!', typeof window !== 'undefined' ? 'CLIENTE' : 'SERVIDOR')
+  
   const { toast } = useToast()
-
+  
   // Estados principais
   const [numbers, setNumbers] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -47,6 +49,8 @@ export default function NumbersPageClient() {
   const [isLoading, setIsLoading] = useState(true)
   const [openGroups, setOpenGroups] = useState(false)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+  
+
 
   // Estados para ações
   const [updatingNumbers, setUpdatingNumbers] = useState<Set<string>>(new Set())
@@ -65,24 +69,6 @@ export default function NumbersPageClient() {
     { label: "Números", href: "/admin/numeros", active: true },
   ]
 
-  // Carregar números
-  useEffect(() => {
-    loadNumbers()
-  }, [])
-
-  // Carregar grupos para filtro
-  useEffect(() => {
-    const loadGroups = async () => {
-      try {
-        const data = await getGroups()
-        setGroups(data)
-      } catch (error) {
-        console.error("Erro ao carregar grupos:", error)
-      }
-    }
-    loadGroups()
-  }, [])
-
   const loadNumbers = async () => {
     try {
       setIsLoading(true)
@@ -100,14 +86,54 @@ export default function NumbersPageClient() {
     }
   }
 
+  // Carregar números
+  useEffect(() => {
+    console.log('🚀 useEffect números EXECUTANDO no cliente!')
+    const loadNumbers = async () => {
+      try {
+        setIsLoading(true)
+        console.log('📞 Chamando getAllNumbers...')
+        const data = await getAllNumbers()
+        console.log('📊 Dados recebidos:', data)
+        setNumbers(data)
+      } catch (error) {
+        console.error('Erro ao carregar números:', error)
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar os números.',
+          variant: 'destructive'
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadNumbers()
+  }, [])
+
+  // Carregar grupos para filtro
+  useEffect(() => {
+    console.log('🚀 useEffect grupos EXECUTANDO no cliente!')
+    const loadGroups = async () => {
+      try {
+        console.log('📞 Chamando getGroups...')
+        const data = await getGroups()
+        console.log('📊 Grupos recebidos:', data)
+        setGroups(Array.isArray(data) ? data : [])
+      } catch (error) {
+        console.error("Erro ao carregar grupos:", error)
+      }
+    }
+    loadGroups()
+  }, [])
+
   // Filtrar números - FUNÇÃO SIMPLES E DIRETA
-  const filteredNumbers = numbers.filter((number) => {
+  const filteredNumbers = (Array.isArray(numbers) ? numbers : []).filter((number) => {
     if (!searchTerm.trim() && selectedGroups.length === 0 && statusFilter === "all") return true
 
     const search = searchTerm.toLowerCase()
     const phone = number.phone?.toLowerCase() || ""
     const name = number.name?.toLowerCase() || ""
-    const groupName = number.groups?.name?.toLowerCase() || ""
+    const groupName = number.group_name?.toLowerCase() || ""
 
     const matchesSearch = phone.includes(search) || name.includes(search) || groupName.includes(search)
 
@@ -283,7 +309,7 @@ export default function NumbersPageClient() {
                     {selectedGroups.length === 0
                       ? "Todos os grupos"
                       : selectedGroups.length === 1
-                      ? groups.find((g) => g.id === selectedGroups[0])?.name ?? "Grupo"
+                      ? (Array.isArray(groups) ? groups : []).find((g) => g.id === selectedGroups[0])?.name ?? "Grupo"
                       : `${selectedGroups.length} grupos`}
                     <ChevronsUpDown className="h-4 w-4 opacity-50" />
                   </Button>
@@ -304,7 +330,7 @@ export default function NumbersPageClient() {
                         {selectedGroups.length === 0 && <Check className="h-4 w-4 text-lime-400" />}
                         <span>Todos os grupos</span>
                       </CommandItem>
-                      {groups.map((g) => (
+                      {(Array.isArray(groups) ? groups : []).map((g) => (
                         <CommandItem
                           key={g.id}
                           value={g.name}
@@ -399,7 +425,7 @@ export default function NumbersPageClient() {
                           </div>
                         </td>
                         <td className="ds-table-cell">
-                          <span className="ds-group-associated">{number.groups?.name || "Grupo não encontrado"}</span>
+                          <span className="ds-group-associated">{number.group_name || "Grupo não encontrado"}</span>
                         </td>
                         <td className="ds-table-cell">
                           <div className="flex items-center gap-3">

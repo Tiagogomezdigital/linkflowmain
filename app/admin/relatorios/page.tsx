@@ -131,6 +131,13 @@ export default function ReportsPage() {
         )}
       </div>
 
+      {/* Filtros */}
+      <AdvancedFilters
+        groups={groups}
+        onFiltersChange={handleFiltersChange}
+        onExport={handleExport}
+      />
+
       {/* Métricas Rápidas */}
       {filters.stats?.groupClicks && filters.stats.groupClicks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -180,26 +187,6 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* Filtros */}
-      <Card className="bg-slate-800/30 border-slate-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Filter className="h-5 w-5" />
-            Filtros de Busca
-          </CardTitle>
-          <CardDescription>
-            Configure os filtros para gerar relatórios personalizados
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AdvancedFilters
-            groups={groups}
-            onFiltersChange={handleFiltersChange}
-            onExport={handleExport}
-          />
-        </CardContent>
-      </Card>
-
       {/* Resultados */}
       {filters.stats?.groupClicks && filters.stats.groupClicks.length > 0 && (
         <Card className="bg-slate-800/30 border-slate-700">
@@ -212,9 +199,9 @@ export default function ReportsPage() {
           <CardContent>
             <div className="space-y-3">
               {filters.stats.groupClicks
-                .sort((a, b) => b.clicks - a.clicks)
+                .sort((a, b) => (b.clicks || 0) - (a.clicks || 0))
                 .map((group, index) => {
-                  const percentage = totalClicks ? ((group.clicks / totalClicks) * 100) : 0
+                  const percentage = totalClicks ? (((group.clicks || 0) / totalClicks) * 100) : 0
                   const isTop3 = index < 3
                   
                   return (
@@ -245,7 +232,7 @@ export default function ReportsPage() {
                       
                       <div className="text-right space-y-1">
                         <div className="text-xl font-bold text-white">
-                          {group.clicks.toLocaleString()}
+                          {(group.clicks || 0).toLocaleString()}
                         </div>
                         <div className="text-sm text-lime-400 font-medium">
                           {percentage.toFixed(1)}%

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin, supabasePublic } from "@/lib/supabase"
+import { registerClick } from "@/lib/api/clicks"
+import { getNextNumber } from "@/lib/api/numbers"
 
 // Seleciona o client com privilégios mais elevados quando disponível
 const supabase = supabaseAdmin ?? supabasePublic
@@ -24,25 +26,32 @@ export async function GET(request: NextRequest) {
 
   try {
     // 1) Buscar próximo número ativo (ou usar phone custom)
-    let targetPhone = customPhone
+    let targetPhone: string = customPhone || ""
     if (!targetPhone) {
-      const { data, error } = await supabase.rpc("get_next_number", { group_slug: slug })
-      pushLog("get_next_number_response", { data, error })
-      if (error || !data || data.length === 0) {
-        return NextResponse.json({ error: error?.message || "Nenhum número encontrado", logs }, { status: 400 })
+      const numberData = await getNextNumber(slug)
+      pushLog("getNextNumber_response", { numberData })
+      if (!numberData) {
+        return NextResponse.json({ error: "Nenhum número encontrado", logs }, { status: 400 })
       }
-      targetPhone = data[0].phone
+      targetPhone = numberData.phone
     }
 
-    // 2) Registrar clique
-    const { data: clickData, error: clickError } = await supabase.rpc("register_click", {
-      group_slug: slug,
-      number_phone: targetPhone,
-      ip_address: "127.0.0.1",
-      user_agent: "SimulateClick/1.0",
-      device_type: "desktop",
-      referrer: "https://debug.local",
-    })
+    // 2) Registrar clique usando função TypeScript
+    let clickData = null
+    let clickError = null
+    try {
+      await registerClick({
+        groupSlug: slug,
+        numberPhone: targetPhone,
+        ipAddress: "127.0.0.1",
+        userAgent: "SimulateClick/1.0",
+        deviceType: "desktop",
+        referrer: "https://debug.local",
+      })
+      clickData = { success: true }
+    } catch (error) {
+      clickError = error
+    }
     pushLog("register_click_response", { data: clickData, error: clickError })
 
     // 3) Retornar resultado final

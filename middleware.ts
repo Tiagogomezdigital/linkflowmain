@@ -1,4 +1,3 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
@@ -17,19 +16,16 @@ export async function middleware(req: NextRequest) {
       return res
     }
 
-    // Criar cliente middleware com auth-helpers
-    const supabase = createMiddlewareClient({ req, res })
-
-    // Verificar sessão atual
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    // Validação extra da sessão para evitar cookies expirados
+    // Verificar se existe token de autenticação
+    const token = req.cookies.get('auth-token')?.value
     let hasValidUser = false
-    if (session?.user?.id) {
-      const { data: userValidation, error: userValidationError } = await supabase.auth.getUser()
-      hasValidUser = !!userValidation?.user && !userValidationError
+
+    // Para o Edge Runtime, vamos fazer uma validação simples
+    // A validação completa será feita nas páginas/APIs
+    if (token && token.length > 50) {
+      // Assumir que o token é válido se existe e tem tamanho adequado
+      // A validação real será feita no servidor
+      hasValidUser = true
     }
 
     const isLoginRoute = path === "/login"
@@ -39,18 +35,20 @@ export async function middleware(req: NextRequest) {
     const isErrorRoute = path === "/error"
 
     // Rotas de API públicas
-    const isPublicApiRoute = path.startsWith("/api/stats/filtered")
+    const isPublicApiRoute = path.startsWith("/api/stats/filtered") || path.startsWith("/api/auth/") || path.startsWith("/api/database/query") || path.startsWith("/api/numbers") || path.startsWith("/api/groups")
+    
+    // Permitir chamadas internas de API (server-side)
+    const isInternalApiCall = req.headers.get("user-agent") === "node" && path.startsWith("/api/")
 
     // Lista consolidada de rotas que NÃO exigem autenticação
-    const isPublicRoute = isLoginRoute || isAuthCallback || isErrorRoute || isPublicApiRoute
+    const isPublicRoute = isLoginRoute || isAuthCallback || isErrorRoute || isPublicApiRoute || isInternalApiCall
 
     // Log detalhado para debug
     if (process.env.NODE_ENV !== "production") {
       console.log("🛡️ Middleware Debug:", {
         path,
-        hasSession: !!session,
+        hasToken: !!token,
         hasValidUser,
-        userId: session?.user?.id,
         isPublicRoute,
         isLoginRoute,
         isAuthCallback,

@@ -7,7 +7,6 @@ import { Loader2, MessageCircle, CheckCircle, Search, Users } from "lucide-react
 export default function RedirectPage() {
   const searchParams = useSearchParams()
   const [step, setStep] = useState(1) // 1: buscando, 2: encontrada, 3: redirecionando
-  const [countdown, setCountdown] = useState(3)
 
   const whatsappUrl = searchParams?.get("to") || ""
   const phone = searchParams?.get("phone") || ""
@@ -30,17 +29,17 @@ export default function RedirectPage() {
 
     console.log("[v0] Starting redirect sequence")
 
-    // Etapa 1: Buscando vaga (2 segundos)
+    // Etapa 1: Buscando vaga (0.7 segundos)
     const timer1 = setTimeout(() => {
       console.log("[v0] Step 2: Vaga encontrada")
       setStep(2)
-    }, 2000)
+    }, 700)
 
-    // Etapa 2: Vaga encontrada (2 segundos)
+    // Etapa 2: Vaga encontrada (0.7 segundos)
     const timer2 = setTimeout(() => {
       console.log("[v0] Step 3: Redirecionando")
       setStep(3)
-    }, 4000)
+    }, 1400)
 
     return () => {
       console.log("[v0] Cleaning up timers")
@@ -53,23 +52,15 @@ export default function RedirectPage() {
     console.log("[v0] Step changed to:", step)
 
     if (step === 3) {
-      console.log("[v0] Starting countdown from 3")
-      const countdownInterval = setInterval(() => {
-        setCountdown((prev) => {
-          console.log("[v0] Countdown:", prev)
-          if (prev <= 1) {
-            clearInterval(countdownInterval)
-            console.log("[v0] Redirecting to WhatsApp:", whatsappUrl)
-            window.location.href = whatsappUrl
-            return 0
-          }
-          return prev - 1
-        })
+      console.log("[v0] Starting countdown from 1")
+      const redirectTimer = setTimeout(() => {
+        console.log("[v0] Redirecting to WhatsApp:", whatsappUrl)
+        window.location.href = whatsappUrl
       }, 1000)
 
       return () => {
-        console.log("[v0] Cleaning up countdown interval")
-        clearInterval(countdownInterval)
+        console.log("[v0] Cleaning up redirect timer")
+        clearTimeout(redirectTimer)
       }
     }
   }, [step, whatsappUrl])
@@ -77,10 +68,19 @@ export default function RedirectPage() {
   const formatPhone = (phoneNumber: string) => {
     if (!phoneNumber) return "Carregando..."
     const cleaned = phoneNumber.replace(/\D/g, "")
-    if (cleaned.length >= 10) {
-      const ddd = cleaned.substring(cleaned.length - 9, cleaned.length - 7)
-      const number = cleaned.substring(cleaned.length - 7)
-      return `(${ddd}) ${number.substring(0, 4)}-${number.substring(4)}`
+    if (cleaned.length >= 11) {
+      // Formato brasileiro: (xx) x xxxx-xxxx
+      const ddd = cleaned.substring(cleaned.length - 11, cleaned.length - 9)
+      const firstDigit = cleaned.substring(cleaned.length - 9, cleaned.length - 8)
+      const middlePart = cleaned.substring(cleaned.length - 8, cleaned.length - 4)
+      const lastPart = cleaned.substring(cleaned.length - 4)
+      return `(${ddd}) ${firstDigit} ${middlePart}-${lastPart}`
+    } else if (cleaned.length >= 10) {
+      // Formato antigo: (xx) xxxx-xxxx
+      const ddd = cleaned.substring(cleaned.length - 10, cleaned.length - 8)
+      const firstPart = cleaned.substring(cleaned.length - 8, cleaned.length - 4)
+      const lastPart = cleaned.substring(cleaned.length - 4)
+      return `(${ddd}) ${firstPart}-${lastPart}`
     }
     return phoneNumber
   }
@@ -135,7 +135,7 @@ export default function RedirectPage() {
         </div>
         <div className="flex items-center justify-center gap-2 mb-4">
           <Loader2 className="w-5 h-5 text-green-400 animate-spin" />
-          <span className="text-lg font-bold text-white">{countdown}</span>
+          <span className="text-lg font-bold text-white">Conectando...</span>
         </div>
         <button
           onClick={() => (window.location.href = whatsappUrl)}
@@ -164,9 +164,7 @@ export default function RedirectPage() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 text-center">
-        <div className="text-xs text-slate-500 mb-2">
-          Debug: Step {step} | URL: {whatsappUrl ? "OK" : "MISSING"}
-        </div>
+
         {renderContent()}
       </div>
     </div>

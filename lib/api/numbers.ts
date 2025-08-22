@@ -1,26 +1,25 @@
-import { supabase } from "@/lib/supabase"
 import type { WhatsAppNumber } from "@/lib/types"
 
-// Função principal que estava faltando
 export async function getAllNumbers(): Promise<WhatsAppNumber[]> {
   try {
-    const { data, error } = await supabase
-      .from("whatsapp_numbers")
-      .select(`*, groups!whatsapp_numbers_group_id_fkey(name)`)
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error fetching all numbers:", error)
-      }
-      throw error
+    console.log('🔍 getAllNumbers: Função chamada!')
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/numbers`)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-
+    
+    const result = await response.json()
+    console.log('🔍 getAllNumbers: Dados recebidos:', result)
+    
+    // Extrair os dados corretamente da resposta da API
+    const data = result.success ? result.data : []
+    console.log('📊 Números retornados:', data?.length || 0)
+    
     return data || []
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in getAllNumbers:", error)
-    }
+    console.error("Error in getAllNumbers:", error)
     return []
   }
 }
@@ -31,37 +30,26 @@ export async function getNumbersByGroupId(groupId: string): Promise<WhatsAppNumb
       console.log("Fetching numbers for group:", groupId)
     }
 
-    const { data, error } = await supabase.rpc("get_numbers_by_group_id", {
-      p_group_id: groupId,
-    })
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error fetching numbers by group:", error)
-      }
-      // Fallback para query direta se a função falhar
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from("whatsapp_numbers")
-        .select("*")
-        .eq("group_id", groupId)
-        .order("created_at", { ascending: false })
-
-      if (fallbackError) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.error("Fallback query also failed:", fallbackError)
-        }
-        throw fallbackError
-      }
-
-      if (process.env.NODE_ENV !== 'production') {
-        console.log("Using fallback data:", fallbackData)
-      }
-      return fallbackData || []
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/numbers?groupId=${groupId}`)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
+    
+    const result = await response.json()
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log("Numbers fetched successfully:", data)
+      console.log("Numbers API response:", result)
     }
+
+    // Extrair os dados corretamente da resposta da API
+    const data = result.success ? result.data : []
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Numbers fetched successfully:", data?.length || 0, "numbers")
+    }
+
     return data || []
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
@@ -73,49 +61,56 @@ export async function getNumbersByGroupId(groupId: string): Promise<WhatsAppNumb
 
 export async function getNumbers(groupId?: string): Promise<WhatsAppNumber[]> {
   try {
-    let query = supabase.from("whatsapp_numbers").select("*").order("created_at", { ascending: false })
-
-    if (groupId) {
-      query = query.eq("group_id", groupId)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Fetching numbers:", { groupId })
     }
 
-    const { data, error } = await query
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error fetching numbers:", error)
-      }
-      throw error
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const url = groupId ? `${baseUrl}/api/numbers?groupId=${groupId}` : `${baseUrl}/api/numbers`
+    const response = await fetch(url)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
+    
+    const data = await response.json()
 
     return data || []
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in getNumbers:", error)
-    }
+    console.error("Error in getNumbers:", error)
     return []
   }
 }
 
-// Função que usa a função SQL get_next_number
-export async function getNextNumber(groupSlug: string): Promise<WhatsAppNumber | null> {
+export async function getNextNumber(groupSlug: string): Promise<{
+  number_id: string;
+  phone: string;
+  final_message: string;
+} | null> {
   try {
-    const { data, error } = await supabase.rpc("get_next_number", {
-      group_slug: groupSlug,
-    })
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error getting next number:", error)
-      }
-      throw error
-    }
-
-    return data && data.length > 0 ? data[0] : null
-  } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in getNextNumber:", error)
+      console.log("Getting next number for group:", groupSlug)
     }
+
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/numbers/next?groupSlug=${groupSlug}`)
+    
+    if (!response.ok) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("Error fetching next number:", response.status)
+      }
+      return null
+    }
+    
+    const result = await response.json()
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Next number result:", result)
+    }
+
+    return result
+  } catch (error) {
+    console.error("Error in getNextNumber:", error)
     return null
   }
 }
@@ -126,101 +121,105 @@ export async function createNumber(numberData: {
   group_id: string
   is_active: boolean
   custom_message?: string
-}): Promise<WhatsAppNumber> {
+}): Promise<WhatsAppNumber | null> {
   try {
-    const { data, error } = await supabase
-      .from("whatsapp_numbers")
-      .insert([
-        {
-          phone: numberData.number,
-          name: numberData.description,
-          group_id: numberData.group_id,
-          is_active: numberData.is_active,
-          custom_message: numberData.custom_message || null,
-        },
-      ])
-      .select()
-      .single()
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error creating number:", error)
-      }
-      throw error
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Creating number:", numberData)
     }
 
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/numbers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(numberData)
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    const data = await response.json()
     return data
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in createNumber:", error)
-    }
-    throw error
+    console.error("Error in createNumber:", error)
+    return null
   }
 }
 
-export async function updateNumber(id: string, updates: Partial<WhatsAppNumber>): Promise<WhatsAppNumber> {
+export async function updateNumber(id: string, updates: Partial<WhatsAppNumber>): Promise<WhatsAppNumber | null> {
   try {
-    const { data, error } = await supabase.from("whatsapp_numbers").update(updates).eq("id", id).select().single()
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error updating number:", error)
-      }
-      throw error
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Updating number:", { id, updates })
     }
 
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/numbers/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updates)
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    const data = await response.json()
     return data
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in updateNumber:", error)
-    }
-    throw error
+    console.error("Error in updateNumber:", error)
+    return null
   }
 }
 
-export async function deleteNumber(id: string): Promise<void> {
+export async function deleteNumber(id: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase.from("whatsapp_numbers").delete().eq("id", id).select()
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error deleting number:", error)
-      }
-      throw error
-    }
-
-    if (!data || data.length === 0) {
-      throw new Error("A exclusão falhou. Verifique as permissões ou se o número ainda existe.")
-    }
-  } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in deleteNumber:", error)
+      console.log("Deleting number:", id)
     }
-    throw error
+
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/numbers/${id}`, {
+      method: 'DELETE'
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return true
+  } catch (error) {
+    console.error("Error in deleteNumber:", error)
+    return false
   }
 }
 
-export async function toggleNumberStatus(id: string, isActive: boolean): Promise<WhatsAppNumber> {
+export async function toggleNumberStatus(id: string, isActive: boolean): Promise<WhatsAppNumber | null> {
   try {
-    const { data, error } = await supabase
-      .from("whatsapp_numbers")
-      .update({ is_active: isActive })
-      .eq("id", id)
-      .select()
-      .single()
-
-    if (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error("Error toggling number status:", error)
-      }
-      throw error
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Toggling number status:", { id, isActive })
     }
 
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/numbers/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ is_active: isActive })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    const data = await response.json()
     return data
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error("Error in toggleNumberStatus:", error)
-    }
-    throw error
+    console.error("Error in toggleNumberStatus:", error)
+    return null
   }
 }

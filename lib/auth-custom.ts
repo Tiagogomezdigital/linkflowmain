@@ -125,14 +125,14 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<A
   try {
     const { email, password } = credentials
     
-    // Buscar usuário com senha
+    // Buscar usuário com senha usando parâmetros seguros
     const query = `
       SELECT id, email, name, is_active, created_at, updated_at, last_login, password_hash
       FROM redirect.users 
-      WHERE email = '${email}' AND is_active = true
+      WHERE email = $1 AND is_active = true
     `
     
-    const { data, error } = await executeRedirectQuery(query)
+    const { data, error } = await executeRedirectQuery(query, [email])
     
     if (error || !data || data.length === 0) {
       return {

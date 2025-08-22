@@ -36,11 +36,22 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
 
   const handleLogout = async () => {
     try {
+      // Chamar API de logout para remover cookie de autenticação
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+      
+      // Também fazer logout do Supabase
       await supabase.auth.signOut()
-      router.refresh()
+      
+      // Redirecionar para login
       router.push("/login")
+      router.refresh()
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
+      // Mesmo com erro, tentar redirecionar
+      router.push("/login")
     }
   }
 

@@ -125,14 +125,31 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<A
   try {
     const { email, password } = credentials
     
-    // Buscar usuário com senha usando parâmetros seguros
+    // Usar Supabase diretamente para evitar problemas com a função executeRedirectQuery
+    const { supabaseAdmin } = await import('@/lib/supabase')
+    
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client não configurado')
+    }
+
     const query = `
       SELECT id, email, name, is_active, created_at, updated_at, last_login, password_hash
       FROM redirect.users 
-      WHERE email = $1 AND is_active = true
+      WHERE email = '${email.replace(/'/g, "''")}'  AND is_active = true
     `
     
-    const { data, error } = await executeRedirectQuery(query, [email])
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Executando query de autenticação:', query)
+    }
+    
+    const { data, error } = await supabaseAdmin.rpc('execute_sql_select', {
+      sql_query: query
+    })
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Resultado da query de autenticação:', { data, error })
+      console.log('🔍 Dados do usuário encontrado:', data?.[0])
+    }
     
     if (error || !data || data.length === 0) {
       return {
@@ -142,6 +159,11 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<A
     }
     
     const userData = data[0]
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Password hash recebido:', userData.password_hash)
+      console.log('🔍 Tipo do password hash:', typeof userData.password_hash)
+    }
     
     // Verificar senha
     const isPasswordValid = await verifyPassword(password, userData.password_hash)

@@ -14,22 +14,35 @@ export async function executeRedirectQuery<T = any>(query: string, params: any[]
       throw new Error('Supabase admin client não configurado')
     }
 
-    // Substituir parâmetros na query (método simples para este caso)
+    // Substituir parâmetros na query de forma mais segura
     let finalQuery = query
     params.forEach((param, index) => {
       const placeholder = `$${index + 1}`
-      const value = typeof param === 'string' ? `'${param.replace(/'/g, "''")}'` : param
-      finalQuery = finalQuery.replace(placeholder, value)
+      // Para strings, usar aspas simples e escapar adequadamente
+      let value: string
+      if (typeof param === 'string') {
+        value = `'${param.replace(/'/g, "''")}'`
+      } else if (param === null || param === undefined) {
+        value = 'NULL'
+      } else {
+        value = String(param)
+      }
+      finalQuery = finalQuery.replace(new RegExp(`\\${placeholder}\\b`, 'g'), value)
     })
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('🔍 Executando query redirect:', finalQuery)
+      console.log('🔍 Parâmetros originais:', params)
     }
 
     // Usar Supabase diretamente para executar SQL
     const { data, error } = await supabaseAdmin.rpc('execute_sql_select', {
       sql_query: finalQuery
     })
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Resultado da RPC:', { data, error })
+    }
 
     if (error) {
       console.error('❌ Erro na query redirect:', error)

@@ -138,18 +138,9 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<A
       WHERE email = '${email.replace(/'/g, "''")}'  AND is_active = true
     `
     
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔍 Executando query de autenticação:', query)
-    }
-    
     const { data, error } = await supabaseAdmin.rpc('execute_sql_select', {
       sql_query: query
     })
-    
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔍 Resultado da query de autenticação:', { data, error })
-      console.log('🔍 Dados do usuário encontrado:', data?.[0])
-    }
     
     if (error || !data || data.length === 0) {
       return {
@@ -158,12 +149,8 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<A
       }
     }
     
-    const userData = data[0]
-    
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔍 Password hash recebido:', userData.password_hash)
-      console.log('🔍 Tipo do password hash:', typeof userData.password_hash)
-    }
+    // O resultado da RPC vem dentro de um objeto 'result'
+    const userData = data[0]?.result || data[0]
     
     // Verificar senha
     const isPasswordValid = await verifyPassword(password, userData.password_hash)
@@ -175,13 +162,16 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<A
       }
     }
     
-    // Atualizar last_login
+    // Atualizar last_login usando Supabase diretamente
     const updateQuery = `
       UPDATE redirect.users 
       SET last_login = NOW() 
       WHERE id = ${userData.id}
     `
-    await executeRedirectQuery(updateQuery)
+    
+    await supabaseAdmin.rpc('execute_sql_select', {
+      sql_query: updateQuery
+    })
     
     // Criar objeto user sem password_hash
     const user: User = {

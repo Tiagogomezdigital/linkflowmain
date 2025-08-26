@@ -41,12 +41,7 @@
       "maxDuration": 10
     }
   },
-  "rewrites": [
-    {
-      "source": "/l/:slug",
-      "destination": "/api/redirect/:slug"
-    }
-  ],
+
   "redirects": [
     {
       "source": "/http-redirect",

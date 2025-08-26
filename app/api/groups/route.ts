@@ -48,38 +48,40 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if slug already exists
-    const { data: existingGroup } = await supabase
-      .schema('redirect')
-      .from('groups')
-      .select('id')
-      .eq('slug', slug)
-      .single()
+    // Check if slug already exists using RPC function
+    const { data: slugExists, error: slugError } = await supabase
+      .rpc('check_slug_exists_for_create', { p_slug: slug })
 
-    if (existingGroup) {
+    if (slugError) {
+      console.error('Error checking slug:', slugError)
+      throw slugError
+    }
+
+    if (slugExists) {
       return NextResponse.json(
         { error: 'Slug already exists' },
         { status: 409 }
       )
     }
 
+    // Create new group using RPC function
     const { data: newGroup, error } = await supabase
-      .schema('redirect')
-      .from('groups')
-      .insert({
-        name,
-        slug,
-        description,
-        is_active
+      .rpc('create_group', {
+        p_name: name,
+        p_slug: slug,
+        p_description: description,
+        p_is_active: is_active
       })
-      .select()
-      .single()
 
     if (error) {
+      console.error('Error creating group:', error)
       throw error
     }
 
-    return NextResponse.json(newGroup, { status: 201 })
+    // RPC returns an array, get the first item
+    const group = Array.isArray(newGroup) ? newGroup[0] : newGroup
+
+    return NextResponse.json(group, { status: 201 })
   } catch (error) {
     console.error('Error creating group:', error)
     return NextResponse.json(

@@ -8,14 +8,13 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 // GET /api/groups/[id] - Get group by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+    // Use custom function to access redirect schema
     const { data: group, error } = await supabaseAdmin
-      .schema('redirect')
-      .from('groups')
-      .select('*')
-      .eq('id', params.id)
+      .rpc('get_group_by_id', { group_id: id })
       .single()
 
     if (error) {
@@ -38,9 +37,10 @@ export async function GET(
 // PUT /api/groups/[id] - Update group
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { name, slug, description, is_active } = body
 
@@ -53,15 +53,10 @@ export async function PUT(
     }
 
     // Check if slug is already taken by another group
-    const { data: existingGroup } = await supabaseAdmin
-      .schema('redirect')
-      .from('groups')
-      .select('id')
-      .eq('slug', slug)
-      .neq('id', params.id)
-      .single()
+    const { data: slugExists } = await supabaseAdmin
+      .rpc('check_slug_exists', { group_slug: slug, exclude_group_id: id })
 
-    if (existingGroup) {
+    if (slugExists) {
       return NextResponse.json(
         { error: 'Slug already exists' },
         { status: 409 }
@@ -69,17 +64,13 @@ export async function PUT(
     }
 
     const { data: updatedGroup, error } = await supabaseAdmin
-      .schema('redirect')
-      .from('groups')
-      .update({
-        name,
-        slug,
-        description,
-        is_active,
-        updated_at: new Date().toISOString()
+      .rpc('update_group_by_id', {
+        group_id: id,
+        group_name: name,
+        group_slug: slug,
+        group_description: description,
+        group_is_active: is_active
       })
-      .eq('id', params.id)
-      .select()
       .single()
 
     if (error) {
@@ -102,15 +93,13 @@ export async function PUT(
 // DELETE /api/groups/[id] - Delete group
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     // Delete the group (CASCADE will automatically delete associated numbers and clicks)
-    const { error } = await supabaseAdmin
-      .schema('redirect')
-      .from('groups')
-      .delete()
-      .eq('id', params.id)
+    const { data: deleted, error } = await supabaseAdmin
+      .rpc('delete_group_by_id', { group_id: id })
 
     if (error) {
       throw error

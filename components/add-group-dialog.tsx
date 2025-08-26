@@ -40,7 +40,7 @@ export function AddGroupDialog({ open, onOpenChange, onGroupAdded }: Props) {
     }
     try {
       setIsSubmitting(true)
-      await createGroup({ name: form.name, slug: form.slug, description: form.description, is_active: form.isActive })
+      await createGroup({ name: form.name, slug: form.slug, description: form.description, default_message: form.defaultMsg, is_active: form.isActive })
       toast({ title: 'Grupo criado', variant: 'default' })
       onOpenChange(false)
       onGroupAdded()

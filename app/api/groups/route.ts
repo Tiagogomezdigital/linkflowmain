@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, slug, description, is_active = true } = body
+    const { name, slug, description, default_message, is_active = true } = body
 
     // Validate required fields
     if (!name || !slug) {
@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
         p_name: name,
         p_slug: slug,
         p_description: description,
+        p_default_message: default_message,
         p_is_active: is_active
       })
 

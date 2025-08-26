@@ -42,7 +42,7 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { name, slug, description, is_active } = body
+    const { name, slug, description, is_active, default_message } = body
 
     // Validate required fields
     if (!name || !slug) {
@@ -69,7 +69,8 @@ export async function PUT(
         group_name: name,
         group_slug: slug,
         group_description: description,
-        group_is_active: is_active
+        group_is_active: is_active,
+        group_default_message: default_message
       })
       .single()
 

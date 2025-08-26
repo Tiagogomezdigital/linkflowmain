@@ -31,8 +31,8 @@ export default function AnalyticsDashboard() {
         const stats = await getDashboardStats(startOfDay(today), endOfDay(today))
         setKpiData({
           totalClicks: stats.totalClicks,
-          activeGroups: 25, // Mock - implementar função para contar grupos ativos
-          totalNumbers: 87, // Mock - implementar função para contar números
+          activeGroups: 25, // Mock - implementar função para contar grupos ativos.
+          totalNumbers: 87, // Mock - implementar função para contar números.
           clicksToday: stats.totalClicks
         })
       } catch (error) {

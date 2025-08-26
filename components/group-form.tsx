@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { normalizeSlug } from "@/lib/utils"
-import { createGroup, updateGroup, checkSlugAvailability } from "@/lib/api/groups"
+import { createGroup, updateGroup, isSlugAvailable } from "@/lib/api/groups"
 import { ENV_CONFIG } from "@/lib/env-config"
 import type { Group } from "@/lib/types"
 
@@ -86,7 +86,7 @@ export function GroupForm({ defaultValues }: GroupFormProps) {
     if (normalizedSlug.length >= 3) {
       setIsCheckingSlug(true)
       try {
-        const isAvailable = await checkSlugAvailability(normalizedSlug, defaultValues?.id)
+        const isAvailable = await isSlugAvailable(normalizedSlug, defaultValues?.id)
         if (!isAvailable) {
           form.setError("slug", {
             type: "manual",

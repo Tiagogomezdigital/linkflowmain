@@ -18,7 +18,7 @@ O LinkFlow é um sistema de redirecionamento de WhatsApp que gerencia números e
 5. **`users`**: Usuários do sistema
 
 ### Views Criadas (Schema `public`) - CRÍTICO
-```sql
+\`\`\`sql
 -- View para números com informações de grupo
 CREATE VIEW public.whatsapp_numbers AS 
 SELECT 
@@ -30,7 +30,7 @@ LEFT JOIN redirect.group_stats gs ON wn.group_id = gs.group_id;
 -- View para grupos
 CREATE VIEW public.groups AS 
 SELECT * FROM redirect.group_stats;
-```
+\`\`\`
 
 ## APIs Principais
 
@@ -54,7 +54,7 @@ SELECT * FROM redirect.group_stats;
 - **Correção Aplicada**: Usa `number.group_name` em vez de `number.groups?.name`
 
 ### Estrutura de Dados no Frontend
-```typescript
+\`\`\`typescript
 interface WhatsAppNumber {
   id: string;
   number: string;
@@ -63,19 +63,19 @@ interface WhatsAppNumber {
   is_active: boolean;
   // ... outros campos
 }
-```
+\`\`\`
 
 ## Middleware de Autenticação
 
 ### Rotas Públicas
-```typescript
+\`\`\`typescript
 const publicApiRoutes = [
   '/api/redirect',
   '/api/clicks',
   '/api/numbers',  // ← Adicionado para chamadas internas
   '/api/groups'    // ← Adicionado para chamadas internas
 ];
-```
+\`\`\`
 
 ## Problemas Resolvidos Recentemente
 
@@ -93,14 +93,14 @@ const publicApiRoutes = [
 
 ## Comandos de Desenvolvimento
 
-```bash
+\`\`\`bash
 # Iniciar servidor de desenvolvimento
 npm run dev
 
 # Testar APIs
 curl http://localhost:3000/api/numbers | jq
 curl http://localhost:3000/api/groups | jq
-```
+\`\`\`
 
 ## URLs Importantes
 - **Admin Dashboard**: http://localhost:3000/admin

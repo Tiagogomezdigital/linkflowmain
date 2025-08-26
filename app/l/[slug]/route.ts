@@ -6,9 +6,9 @@ import { getNextNumber } from "@/lib/api/numbers"
 // Se service role estiver configurado, utilizamos o client admin (somente no servidor)
 const supabase = supabaseAdmin ?? supabasePublic
 
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const slug = params.slug
+    const { slug } = await params
     const userAgent = request.headers.get("user-agent") || ""
     // Netlify pode usar cabeçalhos diferentes para o IP do cliente
     const ip =

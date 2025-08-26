@@ -7,9 +7,10 @@ const supabase = supabaseAdmin ?? supabasePublic
 // GET /api/numbers/[id] - Get WhatsApp number by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const { data: number, error } = await supabase
       .schema('redirect')
       .from('whatsapp_numbers')
@@ -21,7 +22,7 @@ export async function GET(
           slug
         )
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error) {
@@ -44,9 +45,10 @@ export async function GET(
 // PUT /api/numbers/[id] - Update WhatsApp number
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { phone, name, group_id, is_active } = body
 
@@ -64,7 +66,7 @@ export async function PUT(
       .from('whatsapp_numbers')
       .select('id')
       .eq('phone', phone)
-      .neq('id', params.id)
+      .neq('id', id)
       .single()
 
     if (existingNumber) {
@@ -99,7 +101,7 @@ export async function PUT(
         is_active,
         updated_at: new Date().toISOString()
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select(`
         *,
         groups (
@@ -130,15 +132,16 @@ export async function PUT(
 // DELETE /api/numbers/[id] - Delete WhatsApp number
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     // Check if number has associated clicks (optional - you might want to keep click history)
     const { data: clicks, error: clicksError } = await supabase
       .schema('redirect')
       .from('clicks')
       .select('id')
-      .eq('number_phone', params.id)
+      .eq('number_phone', id)
       .limit(1)
 
     if (clicksError) {
@@ -150,7 +153,7 @@ export async function DELETE(
       .schema('redirect')
       .from('whatsapp_numbers')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) {
       throw error
@@ -169,9 +172,10 @@ export async function DELETE(
 // PATCH /api/numbers/[id] - Toggle WhatsApp number status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { is_active } = body
 
@@ -189,7 +193,7 @@ export async function PATCH(
         is_active,
         updated_at: new Date().toISOString()
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select(`
         *,
         groups (

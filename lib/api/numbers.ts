@@ -92,7 +92,11 @@ export async function getNextNumber(groupSlug: string): Promise<{
       console.log("Getting next number for group:", groupSlug)
     }
 
-    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    // Em desenvolvimento, sempre usar localhost
+    const baseUrl = typeof window !== 'undefined' ? '' : 
+      (process.env.NODE_ENV === 'production' ? 
+        (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000') : 
+        'http://localhost:3000')
     const response = await fetch(`${baseUrl}/api/numbers/next?groupSlug=${groupSlug}`)
     
     if (!response.ok) {

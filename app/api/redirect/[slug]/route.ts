@@ -6,9 +6,9 @@ import { getNextNumber } from "@/lib/api/numbers"
 
 const supabase = supabaseAdmin ?? supabasePublic
 
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const slug = params.slug
+    const { slug } = await params
     const userAgent = request.headers.get("user-agent") || ""
     const ip =
       request.headers.get("x-forwarded-for") ||

@@ -105,25 +105,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Check if group has associated WhatsApp numbers
-    const { data: numbers, error: numbersError } = await supabaseAdmin
-      .schema('redirect')
-      .from('whatsapp_numbers')
-      .select('id')
-      .eq('group_id', params.id)
-      .limit(1)
-
-    if (numbersError) {
-      throw numbersError
-    }
-
-    if (numbers && numbers.length > 0) {
-      return NextResponse.json(
-        { error: 'Cannot delete group with associated WhatsApp numbers' },
-        { status: 409 }
-      )
-    }
-
+    // Delete the group (CASCADE will automatically delete associated numbers and clicks)
     const { error } = await supabaseAdmin
       .schema('redirect')
       .from('groups')

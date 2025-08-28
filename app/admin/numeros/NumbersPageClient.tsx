@@ -12,7 +12,7 @@ import Link from "next/link"
 import { Breadcrumb } from "@/components/breadcrumb"
 import { useToast } from "@/hooks/use-toast"
 import { formatPhoneNumber, formatTimeAgo } from "@/lib/utils"
-import { getAllNumbers, updateNumber, deleteNumber } from "@/lib/api/numbers"
+import { getAllNumbers, updateNumber, deleteNumber, toggleNumberStatus } from "@/lib/api/numbers"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
@@ -159,7 +159,7 @@ export default function NumbersPageClient() {
   const handleToggleActive = async (numberId: string, isActive: boolean) => {
     setUpdatingNumbers((prev) => new Set(prev).add(numberId))
     try {
-      await updateNumber(numberId, { is_active: isActive })
+      await toggleNumberStatus(numberId, isActive)
       setNumbers((prev) => prev.map((num) => (num.id === numberId ? { ...num, is_active: isActive } : num)))
       toast({
         title: isActive ? "Número ativado" : "Número desativado",

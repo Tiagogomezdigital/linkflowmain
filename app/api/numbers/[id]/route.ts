@@ -186,26 +186,16 @@ export async function PATCH(
       )
     }
 
+    // Use RPC function to toggle status
     const { data: updatedNumber, error } = await supabase
-      .schema('redirect')
-      .from('whatsapp_numbers')
-      .update({
-        is_active,
-        updated_at: new Date().toISOString()
+      .rpc('toggle_whatsapp_number_status', {
+        p_number_id: id,
+        p_is_active: is_active
       })
-      .eq('id', id)
-      .select(`
-        *,
-        groups (
-          id,
-          name,
-          slug
-        )
-      `)
-      .single()
 
     if (error) {
-      if (error.code === 'PGRST116') {
+      console.error('Error toggling WhatsApp number status:', error)
+      if (error.message?.includes('not found')) {
         return NextResponse.json({ error: 'WhatsApp number not found' }, { status: 404 })
       }
       throw error

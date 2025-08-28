@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatPhoneNumber, formatTimeAgo } from "@/lib/utils"
-import { getAllNumbers, updateNumber, deleteNumber } from "@/lib/api/numbers"
+import { getAllNumbers, updateNumber, deleteNumber, toggleNumberStatus } from "@/lib/api/numbers"
 import type { WhatsAppNumber } from "@/lib/types"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -117,13 +117,13 @@ export function AllNumbersTable({ searchTerm }: AllNumbersTableProps) {
     setUpdatingNumbers((prev) => new Set(prev).add(numberId))
 
     try {
-      await updateNumber(numberId, { is_active: isActive })
+      await toggleNumberStatus(numberId, isActive)
       setNumbers((prev) => prev.map((number) => (number.id === numberId ? { ...number, is_active: isActive } : number)))
 
       toast({
         title: isActive ? "Número ativado" : "Número desativado",
         description: `O número foi ${isActive ? "ativado" : "desativado"} com sucesso.`,
-        variant: "success",
+        variant: "default",
       })
     } catch (error) {
       console.error("Error updating number:", error)
@@ -157,7 +157,7 @@ export function AllNumbersTable({ searchTerm }: AllNumbersTableProps) {
       toast({
         title: "Número excluído",
         description: "O número foi removido com sucesso.",
-        variant: "success",
+        variant: "default",
       })
     } catch (error) {
       console.error("Error deleting number:", error)
@@ -213,7 +213,7 @@ export function AllNumbersTable({ searchTerm }: AllNumbersTableProps) {
       toast({
         title: "Número atualizado",
         description: "O número foi atualizado com sucesso.",
-        variant: "success",
+        variant: "default",
       })
       setEditDialogOpen(false)
     } catch (error) {

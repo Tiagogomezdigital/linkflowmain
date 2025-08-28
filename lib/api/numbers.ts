@@ -209,7 +209,7 @@ export async function toggleNumberStatus(id: string, isActive: boolean): Promise
 
     const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
     const response = await fetch(`${baseUrl}/api/numbers/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },

@@ -192,10 +192,11 @@ export async function PATCH(
         p_number_id: id,
         p_is_active: is_active
       })
+      .single()
 
     if (error) {
       console.error('Error toggling WhatsApp number status:', error)
-      if (error.message?.includes('not found')) {
+      if (error.code === 'PGRST116') {
         return NextResponse.json({ error: 'WhatsApp number not found' }, { status: 404 })
       }
       throw error

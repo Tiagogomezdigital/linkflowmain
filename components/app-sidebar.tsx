@@ -29,7 +29,7 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
     {
       label: "RELATÓRIOS",
       items: [
-        { name: "Relatório Geral", href: "/admin/relatorios", icon: BarChart2, description: "Análise geral por período" },
+        { name: "Relatórios de Links", href: "/admin/relatorios/relatorio", icon: BarChart2, description: "Análise de cliques e visitantes" },
       ],
     },
   ]

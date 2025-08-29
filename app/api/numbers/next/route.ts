@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
       console.log('🔍 API /api/numbers/next chamada para slug:', groupSlug)
     }
 
-    // Buscar o próximo número disponível usando função RPC no schema redirect
-    const { data: result, error } = await supabase.rpc('redirect.get_next_number_for_group', {
-      p_group_slug: groupSlug
+    // Buscar o próximo número disponível usando função RPC com round robin correto
+    const { data: result, error } = await supabase.rpc('get_next_number', {
+      group_slug: groupSlug
     })
 
     if (error) {

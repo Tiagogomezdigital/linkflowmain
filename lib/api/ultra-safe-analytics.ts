@@ -5,41 +5,42 @@ export async function getUltraSafeGroupAnalytics(groupId: string) {
   try {
     console.log("🔍 Buscando analytics ultra seguro para grupo:", groupId)
 
-    // 1. Buscar info do grupo (SEGURO)
-    const { data: groupInfo, error: groupError } = await supabase.from("groups").select("*").eq("id", groupId).single()
+    // 1. Buscar info do grupo usando função RPC (SEGURO)
+    const { data: groupInfo, error: groupError } = await supabase.rpc("get_group_info", {
+      p_group_id: groupId
+    }).single()
 
     if (groupError) {
       console.error("❌ Erro ao buscar grupo:", groupError)
       throw groupError
     }
 
-    // 2. Buscar números do grupo (SEGURO)
-    const { data: numbers, error: numbersError } = await supabase
-      .from("whatsapp_numbers")
-      .select("*")
-      .eq("group_id", groupId)
-      .order("created_at", { ascending: false })
+    // 2. Buscar números do grupo usando função RPC (SEGURO)
+    const { data: numbers, error: numbersError } = await supabase.rpc("get_whatsapp_numbers", {
+      p_group_id: groupId
+    })
 
     if (numbersError) {
       console.error("❌ Erro ao buscar números:", numbersError)
       throw numbersError
     }
 
-    // 3. Buscar cliques do grupo (SEGURO)
-    const { data: clicks, error: clicksError } = await supabase
-      .from("clicks")
-      .select("*")
-      .eq("group_id", groupId)
-      .order("created_at", { ascending: false })
-      .limit(50000) // Limite alto para evitar problemas de performance
+    // 3. Buscar cliques do grupo usando função RPC (SEGURO)
+    const { data: clicks, error: clicksError } = await supabase.rpc("get_clicks", {
+      p_group_id: groupId,
+      p_limit: 50000
+    })
 
     if (clicksError) {
       console.error("❌ Erro ao buscar cliques:", clicksError)
       throw clicksError
     }
 
-    // 4. Buscar stats do grupo (SEGURO)
-    const { data: stats, error: statsError } = await supabase.from("group_stats").select("*").eq("id", groupId).single()
+    // 4. Buscar stats do grupo usando função RPC (SEGURO)
+    const { data: statsArray, error: statsError } = await supabase.rpc("get_group_stats", {
+      p_group_id: groupId
+    })
+    const stats = statsArray?.[0] || null
 
     if (statsError) {
       console.warn("⚠️ Stats não encontradas, usando dados calculados")

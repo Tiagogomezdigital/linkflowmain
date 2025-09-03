@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { getGroups } from "@/lib/api/groups"
 import type { Group } from "@/lib/types"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -61,8 +62,9 @@ export default function NumbersPageClient() {
   // Estados para edição
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [numberToEdit, setNumberToEdit] = useState<any>(null)
-  const [editForm, setEditForm] = useState({ name: "", phone: "", is_active: true })
+  const [editForm, setEditForm] = useState({ name: "", phone: "", group_id: "", custom_message: "", is_active: true })
   const [isEditing, setIsEditing] = useState(false)
+  const [groupSelectOpen, setGroupSelectOpen] = useState(false)
 
   const breadcrumbItems = [
     { label: "Dashboard", href: "/admin/dashboard" },
@@ -213,6 +215,8 @@ export default function NumbersPageClient() {
     setEditForm({
       name: number.name || "",
       phone: number.phone,
+      group_id: number.group_id || "",
+      custom_message: number.custom_message || "",
       is_active: number.is_active,
     })
     setEditDialogOpen(true)
@@ -553,22 +557,97 @@ export default function NumbersPageClient() {
           <form onSubmit={handleEditSubmit}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome (opcional)</Label>
-                <Input
-                  id="name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="bg-slate-900 border-slate-700 text-white"
-                />
+                <Label>Grupo *</Label>
+                <Popover open={groupSelectOpen} onOpenChange={setGroupSelectOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={groupSelectOpen}
+                      className="w-full justify-between bg-slate-900 border-slate-700 text-white hover:bg-slate-800"
+                    >
+                      {editForm.group_id
+                        ? groups.find((group) => group.id === editForm.group_id)?.name
+                        : "Selecione um grupo..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0 bg-slate-900 border-slate-700">
+                    <Command className="bg-slate-900">
+                      <CommandInput placeholder="Buscar grupo..." className="bg-slate-900 border-slate-700" />
+                      <CommandList>
+                        <CommandEmpty>Nenhum grupo encontrado.</CommandEmpty>
+                        <CommandItem
+                          value=""
+                          onSelect={() => {
+                            setEditForm({ ...editForm, group_id: "" })
+                            setGroupSelectOpen(false)
+                          }}
+                          className="text-white hover:bg-slate-800"
+                        >
+                          <Check
+                            className={`mr-2 h-4 w-4 ${
+                              editForm.group_id === "" ? "opacity-100" : "opacity-0"
+                            }`}
+                          />
+                          Nenhum grupo
+                        </CommandItem>
+                        {groups.map((group) => (
+                          <CommandItem
+                            key={group.id}
+                            value={group.name}
+                            onSelect={() => {
+                              setEditForm({ ...editForm, group_id: group.id })
+                              setGroupSelectOpen(false)
+                            }}
+                            className="text-white hover:bg-slate-800"
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${
+                                editForm.group_id === group.id ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+                            {group.name}
+                          </CommandItem>
+                        ))}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Número</Label>
+                <Label htmlFor="phone">Número de telefone *</Label>
                 <Input
                   id="phone"
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  placeholder="(11) 99999-9999"
                   className="bg-slate-900 border-slate-700 text-white"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Descrição (opcional)</Label>
+                <Input
+                  id="name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  placeholder="Ex: Atendimento principal"
+                  className="bg-slate-900 border-slate-700 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="custom_message">Mensagem Personalizada (opcional)</Label>
+                <Textarea
+                  id="custom_message"
+                  value={editForm.custom_message}
+                  onChange={(e) => setEditForm({ ...editForm, custom_message: e.target.value })}
+                  placeholder="Ex: Olá! Sou da equipe de vendas. Como posso ajudar?"
+                  rows={3}
+                  className="bg-slate-900 border-slate-700 text-white"
+                />
+                <p className="text-sm text-slate-400">
+                  Se não informada, será usada a mensagem padrão do grupo
+                </p>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch

@@ -16,7 +16,7 @@ export async function GET(
       .from('whatsapp_numbers')
       .select(`
         *,
-        groups (
+        redirect.groups (
           id,
           name,
           slug
@@ -50,66 +50,69 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { phone, name, group_id, is_active } = body
+    const { phone, name, group_id, custom_message, is_active } = body
 
     // Validate required fields
-    if (!phone || !name || !group_id) {
+    if (!phone) {
       return NextResponse.json(
-        { error: 'Phone, name and group_id are required' },
+        { error: 'Phone is required' },
         { status: 400 }
       )
     }
 
     // Check if phone number is already taken by another number
-    const { data: existingNumber } = await supabase
-      .schema('redirect')
-      .from('whatsapp_numbers')
-      .select('id')
-      .eq('phone', phone)
-      .neq('id', id)
+    const { data: phoneExists, error: phoneCheckError } = await supabase
+      .rpc('check_phone_exists', {
+        phone_number: phone,
+        exclude_id: id
+      })
       .single()
 
-    if (existingNumber) {
+    if (phoneCheckError) {
+      console.error('Error checking phone existence:', phoneCheckError)
+      return NextResponse.json(
+        { error: 'Error validating phone number' },
+        { status: 500 }
+      )
+    }
+
+    if (phoneExists) {
       return NextResponse.json(
         { error: 'Phone number already exists' },
         { status: 409 }
       )
     }
 
-    // Verify group exists
-    const { data: group } = await supabase
-      .schema('redirect')
-      .from('groups')
-      .select('id')
-      .eq('id', group_id)
-      .single()
+    // Verify group exists (only if group_id is provided)
+    if (group_id && group_id.trim() !== '') {
+      console.log('🔍 Verificando grupo:', group_id)
+      console.log('🔧 Cliente Supabase usado:', supabase === supabaseAdmin ? 'Admin' : 'Public')
+      
+      // Usar função do schema público para acessar grupos do schema redirect
+      const { data: group, error: groupError } = await supabase
+        .rpc('get_group_by_id', { group_uuid: group_id })
 
-    if (!group) {
-      return NextResponse.json(
-        { error: 'Group not found' },
-        { status: 404 }
-      )
+      console.log('📊 Resultado da busca do grupo:', { group, groupError })
+
+      if (groupError || !group || group.length === 0) {
+        console.log('❌ Erro ou grupo não encontrado:', { groupError, group_id })
+        return NextResponse.json(
+          { error: 'Group not found', details: groupError?.message },
+          { status: 404 }
+        )
+      }
+      console.log('✅ Grupo encontrado:', group[0])
     }
 
     const { data: updatedNumber, error } = await supabase
-      .schema('redirect')
-      .from('whatsapp_numbers')
-      .update({
-        phone,
-        name,
-        group_id,
-        is_active,
-        updated_at: new Date().toISOString()
+      .rpc('update_whatsapp_number', {
+        number_id: id,
+        new_phone: phone,
+        new_name: name,
+        new_group_id: group_id && group_id.trim() !== '' ? group_id : null,
+        new_custom_message: custom_message,
+        new_is_active: is_active
       })
-      .eq('id', id)
-      .select(`
-        *,
-        groups (
-          id,
-          name,
-          slug
-        )
-      `)
       .single()
 
     if (error) {
@@ -136,27 +139,21 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    // Check if number has associated clicks (optional - you might want to keep click history)
-    const { data: clicks, error: clicksError } = await supabase
-      .schema('redirect')
-      .from('clicks')
-      .select('id')
-      .eq('number_phone', id)
-      .limit(1)
-
-    if (clicksError) {
-      console.warn('Warning checking clicks:', clicksError)
-    }
-
-    // Delete the WhatsApp number (clicks can remain for historical data)
-    const { error } = await supabase
-      .schema('redirect')
-      .from('whatsapp_numbers')
-      .delete()
-      .eq('id', id)
+    
+    // Delete the WhatsApp number using RPC function
+    const { data: deleted, error } = await supabase
+      .rpc('delete_whatsapp_number', { p_number_id: id })
 
     if (error) {
+      console.error('Error calling delete_whatsapp_number RPC:', error)
       throw error
+    }
+
+    if (!deleted) {
+      return NextResponse.json(
+        { error: 'Number not found' },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json({ success: true })

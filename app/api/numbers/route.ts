@@ -91,9 +91,30 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Grupo encontrado, prosseguindo')
 
+    // Verificar se o grupo tem influencer associado
+    console.log('🔍 Verificando se grupo tem influencer associado')
+    const { data: groupInfo, error: groupError } = await supabase.rpc('get_group_info', {
+      p_group_id: group_id
+    })
+
+    if (groupError) {
+      console.log('❌ Erro ao buscar informações do grupo:', groupError)
+      throw groupError
+    }
+
+    console.log('📋 Dados do grupo retornados:', JSON.stringify(groupInfo, null, 2))
+    const hasInfluencer = groupInfo?.[0]?.influencer_id !== null
+    console.log('📊 Grupo tem influencer:', hasInfluencer)
+
     // Use RPC function to insert number
     console.log('💾 Inserindo novo número no banco usando RPC')
-    const { data: newNumber, error } = await supabase.rpc('insert_whatsapp_number', {
+    const rpcFunction = hasInfluencer 
+      ? 'insert_whatsapp_number' 
+      : 'insert_whatsapp_number_no_influencer_check'
+    
+    console.log('🔧 Usando função RPC:', rpcFunction)
+    
+    const { data: newNumber, error } = await supabase.rpc(rpcFunction, {
       p_phone: number,
       p_name: description || 'Número sem descrição',
       p_group_id: group_id,

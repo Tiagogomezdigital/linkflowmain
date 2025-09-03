@@ -13,18 +13,18 @@ export async function GET(
   try {
     const { id } = await params
     // Use custom function to access redirect schema
-    const { data: group, error } = await supabaseAdmin
-      .rpc('get_group_by_id', { group_id: id })
-      .single()
+    const { data: groups, error } = await supabaseAdmin
+      .rpc('get_group_by_id', { group_uuid: id })
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Group not found' }, { status: 404 })
-      }
       throw error
     }
 
-    return NextResponse.json(group)
+    if (!groups || groups.length === 0) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 })
+    }
+
+    return NextResponse.json(groups[0])
   } catch (error) {
     console.error('Error fetching group:', error)
     return NextResponse.json(

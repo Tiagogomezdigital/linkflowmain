@@ -60,27 +60,30 @@ export async function PUT(
       )
     }
 
-    // Check if phone number is already taken by another number
-    const { data: phoneExists, error: phoneCheckError } = await supabase
-      .rpc('check_phone_exists', {
-        phone_number: phone,
-        exclude_id: id
-      })
-      .single()
+    // Check if phone number is already taken by another number in the same group
+    if (group_id && group_id.trim() !== '') {
+      const { data: phoneExists, error: phoneCheckError } = await supabase
+        .rpc('check_phone_exists_in_group', {
+          phone_number: phone,
+          group_uuid: group_id,
+          exclude_id: id
+        })
+        .single()
 
-    if (phoneCheckError) {
-      console.error('Error checking phone existence:', phoneCheckError)
-      return NextResponse.json(
-        { error: 'Error validating phone number' },
-        { status: 500 }
-      )
-    }
+      if (phoneCheckError) {
+        console.error('Error checking phone existence in group:', phoneCheckError)
+        return NextResponse.json(
+          { error: 'Error validating phone number' },
+          { status: 500 }
+        )
+      }
 
-    if (phoneExists) {
-      return NextResponse.json(
-        { error: 'Phone number already exists' },
-        { status: 409 }
-      )
+      if (phoneExists) {
+        return NextResponse.json(
+          { error: 'Phone number already exists in this group' },
+          { status: 409 }
+        )
+      }
     }
 
     // Verify group exists (only if group_id is provided)

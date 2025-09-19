@@ -61,20 +61,32 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Validação inicial passou')
 
-    // Check if phone number already exists using RPC
-    console.log('🔍 Verificando se número já existe:', number)
-    const { data: existingNumbers } = await supabase.rpc('get_numbers_with_groups')
-    
-    const existingNumber = existingNumbers?.find((num: any) => num.phone === number)
-    if (existingNumber) {
-      console.log('❌ Número já existe')
+    // Check if phone number already exists in the same group using RPC
+    console.log('🔍 Verificando se número já existe no grupo:', number, 'grupo:', group_id)
+    const { data: phoneExists, error: phoneCheckError } = await supabase
+      .rpc('check_phone_exists_in_group', {
+        phone_number: number,
+        group_uuid: group_id
+      })
+      .single()
+
+    if (phoneCheckError) {
+      console.error('Error checking phone existence in group:', phoneCheckError)
       return NextResponse.json(
-        { error: 'Phone number already exists' },
+        { error: 'Error validating phone number' },
+        { status: 500 }
+      )
+    }
+
+    if (phoneExists) {
+      console.log('❌ Número já existe no grupo')
+      return NextResponse.json(
+        { error: 'Phone number already exists in this group' },
         { status: 409 }
       )
     }
 
-    console.log('✅ Número não existe, prosseguindo')
+    console.log('✅ Número não existe no grupo, prosseguindo')
 
     // Verify group exists using RPC
     console.log('🔍 Verificando se grupo existe:', group_id)

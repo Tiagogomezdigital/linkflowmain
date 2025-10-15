@@ -84,7 +84,7 @@ export function GroupsTable() {
       toast({
         title: "Grupo excluído",
         description: `O grupo "${groupToDelete.name}" foi excluído com sucesso.`,
-        variant: "default",
+        variant: "success",
       })
     } catch (error) {
       console.error("Error deleting group:", error)

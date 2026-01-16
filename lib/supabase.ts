@@ -1,4 +1,4 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createBrowserClient } from "@supabase/auth-helpers-nextjs"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
 // Verificar se as variáveis de ambiente estão definidas
@@ -18,13 +18,17 @@ let _supabaseClient: any = null
 
 export function getSupabaseClient() {
   if (!_supabaseClient) {
-    _supabaseClient = createClientComponentClient()
+    _supabaseClient = createBrowserClient(supabaseUrl!, supabaseAnonKey!)
   }
   return _supabaseClient
 }
 
-// Cliente principal exportado (singleton)
-export const supabase = getSupabaseClient()
+// Cliente principal exportado (singleton com lazy loading via Proxy para evitar erro no build)
+export const supabase = new Proxy({}, {
+  get: function (target, prop) {
+    return getSupabaseClient()[prop]
+  }
+}) as any
 
 
 

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getUserSession } from "@/lib/supabase-auth";
+import { getUserSession } from "@/lib/auth-server";
 import ClientDashboard from "@/components/analytics/ClientDashboard";
 
 export default async function AnalyticsPage() {

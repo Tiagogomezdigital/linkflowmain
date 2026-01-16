@@ -1,13 +1,9 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 import { getSupabaseClient } from "./supabase";
-
-// Usar o cliente centralizado para autenticação
-export const supabaseAuth = getSupabaseClient()
 
 // Função de login simplificada
 export async function loginUser(email: string, password: string) {
   console.log("🔐 Iniciando login para:", email)
+  const supabaseAuth = getSupabaseClient()
 
   const { data, error } = await supabaseAuth.auth.signInWithPassword({
     email: email.trim(),
@@ -25,18 +21,14 @@ export async function loginUser(email: string, password: string) {
 
 // Função de logout
 export async function logoutUser() {
+  const supabaseAuth = getSupabaseClient()
   const { error } = await supabaseAuth.auth.signOut()
   return { error }
 }
 
-// Verificar sessão atual
+// Verificar sessão atual (Client Side)
 export async function getCurrentSession() {
+  const supabaseAuth = getSupabaseClient()
   const { data } = await supabaseAuth.auth.getSession()
   return data.session
-}
-
-export async function getUserSession() {
-  const supabase = createServerComponentClient({ cookies });
-  const { data } = await supabase.auth.getSession();
-  return data.session;
 }

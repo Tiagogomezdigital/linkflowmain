@@ -23,6 +23,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       console.log(`🔍 Iniciando redirecionamento para slug: ${slug}`)
     }
 
+    // Webhook Debug
+    try {
+      const webhookPayload = {
+        url: request.url,
+        timestamp: new Date().toISOString()
+      }
+
+      // Envia o webhook sem aguardar resposta (fire and forget) para não atrasar o redirect
+      fetch('https://n8n.inovamatrix.com.br/webhook/debug', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload),
+      }).catch(err => console.error('❌ Erro silencioso no envio do webhook:', err))
+
+    } catch (err) {
+      console.error('❌ Erro geral no bloco do webhook:', err)
+    }
+
     // Detectar tipo de dispositivo
     const deviceType = userAgent.toLowerCase().includes("mobile") ? "mobile" : "desktop"
 
@@ -74,7 +94,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         deviceType: deviceType,
         referrer: referrer,
       })
-      
+
       if (process.env.NODE_ENV !== 'production') {
         console.log("✅ Clique registrado com sucesso!")
       }

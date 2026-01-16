@@ -1,6 +1,11 @@
 {
   "name": "my-v0-project",
   "version": "0.1.0",
+  "pnpm": {
+    "allowedBuildScripts": [
+      "sharp"
+    ]
+  },
   "private": true,
   "scripts": {
     "build": "next build",

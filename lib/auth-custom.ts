@@ -75,13 +75,13 @@ export async function getUserByEmail(email: string): Promise<User | null> {
       FROM redirect.users 
       WHERE email = '${email}' AND is_active = true
     `
-    
+
     const { data, error } = await executeRedirectQuery(query)
-    
+
     if (error || !data || data.length === 0) {
       return null
     }
-    
+
     const userData = data[0]
     return {
       id: userData.id,
@@ -106,13 +106,13 @@ export async function getUserById(id: number): Promise<User | null> {
       FROM redirect.users 
       WHERE id = ${id} AND is_active = true
     `
-    
+
     const { data, error } = await executeRedirectQuery(query)
-    
+
     if (error || !data || data.length === 0) {
       return null
     }
-    
+
     return data[0] as User
   } catch (error) {
     console.error('Erro ao buscar usuário por ID:', error)
@@ -124,10 +124,10 @@ export async function getUserById(id: number): Promise<User | null> {
 export async function authenticateUser(credentials: LoginCredentials): Promise<AuthResult> {
   try {
     const { email, password } = credentials
-    
+
     // Usar Supabase diretamente para evitar problemas com a função executeRedirectQuery
     const { supabaseAdmin } = await import('@/lib/supabase')
-    
+
     if (!supabaseAdmin) {
       throw new Error('Supabase admin client não configurado')
     }
@@ -137,42 +137,42 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<A
       FROM redirect.users 
       WHERE email = '${email.replace(/'/g, "''")}'  AND is_active = true
     `
-    
+
     const { data, error } = await supabaseAdmin.rpc('execute_sql_select', {
       sql_query: query
     })
-    
+
     if (error || !data || data.length === 0) {
       return {
         success: false,
         error: 'Usuário não encontrado ou inativo'
       }
     }
-    
+
     // O resultado da RPC vem dentro de um objeto 'result'
     const userData = data[0]?.result || data[0]
-    
+
     // Verificar senha
     const isPasswordValid = await verifyPassword(password, userData.password_hash)
-    
+
     if (!isPasswordValid) {
       return {
         success: false,
         error: 'Senha incorreta'
       }
     }
-    
+
     // Atualizar last_login usando Supabase diretamente
     const updateQuery = `
       UPDATE redirect.users 
       SET last_login = NOW() 
       WHERE id = ${userData.id}
     `
-    
+
     await supabaseAdmin.rpc('execute_sql_select', {
       sql_query: updateQuery
     })
-    
+
     // Criar objeto user sem password_hash
     const user: User = {
       id: userData.id,
@@ -183,10 +183,10 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<A
       updated_at: userData.updated_at,
       last_login: new Date().toISOString()
     }
-    
+
     // Gerar token
     const token = generateToken(user)
-    
+
     return {
       success: true,
       user,
@@ -207,26 +207,26 @@ export async function validateSession(token: string): Promise<User | null> {
     if (process.env.NODE_ENV !== 'production') {
       console.log('🔍 Validando sessão com token:', token.substring(0, 20) + '...')
     }
-    
+
     const decoded = verifyToken(token)
-    
+
     if (process.env.NODE_ENV !== 'production') {
       console.log('🔍 Token decodificado:', decoded)
     }
-    
+
     if (!decoded || !decoded.id) {
       if (process.env.NODE_ENV !== 'production') {
         console.log('❌ Token inválido ou sem ID')
       }
       return null
     }
-    
+
     const user = await getUserById(decoded.id)
-    
+
     if (process.env.NODE_ENV !== 'production') {
       console.log('🔍 Usuário encontrado:', user ? 'Sim' : 'Não')
     }
-    
+
     return user
   } catch (error) {
     console.error('❌ Erro ao validar sessão:', error)

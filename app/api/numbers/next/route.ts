@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const groupSlug = searchParams.get('groupSlug')
-    
+
     if (!groupSlug) {
       return NextResponse.json(
         { error: 'groupSlug parameter is required' },
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     const numberData = result[0]
-    
+
     if (process.env.NODE_ENV !== 'production') {
       console.log('✅ Número encontrado:', numberData)
     }

@@ -42,17 +42,17 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 const _supabaseAdmin = supabaseServiceKey
   ? createSupabaseClient(supabaseUrl || "", supabaseServiceKey, {
-      global: {
-        headers: {
-          apikey: supabaseServiceKey,
-          Authorization: `Bearer ${supabaseServiceKey}`,
-        },
+    global: {
+      headers: {
+        apikey: supabaseServiceKey,
+        Authorization: `Bearer ${supabaseServiceKey}`,
       },
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
   : null
 
 export const supabaseAdmin = _supabaseAdmin

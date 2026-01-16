@@ -96,7 +96,7 @@ export async function updateGroupRedirect(id: string, updates: any) {
   const fields = Object.keys(updates)
   const values = Object.values(updates)
   const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ')
-  
+
   const query = `
     UPDATE redirect.groups 
     SET ${setClause}, updated_at = NOW()
@@ -114,12 +114,12 @@ export async function deleteGroupRedirect(id: string) {
 export async function checkSlugAvailabilityRedirect(slug: string, excludeId?: string) {
   let query = `SELECT COUNT(*) as count FROM redirect.groups WHERE slug = $1`
   const params = [slug]
-  
+
   if (excludeId) {
     query += ` AND id != $2`
     params.push(excludeId)
   }
-  
+
   return executeRedirectQuery(query, params)
 }
 
@@ -153,19 +153,19 @@ export async function registerClickRedirect(clickData: {
   // Primeiro buscar o número pelo telefone
   const numberQuery = `SELECT id FROM redirect.whatsapp_numbers WHERE phone = $1 AND is_active = true LIMIT 1`
   const numberResult = await executeRedirectQuery(numberQuery, [clickData.numberPhone])
-  
+
   if (!numberResult.data || numberResult.data.length === 0) {
     throw new Error(`Número não encontrado: ${clickData.numberPhone}`)
   }
-  
+
   const numberId = numberResult.data[0].id
-  
+
   // Registrar o clique
   const clickQuery = `
     INSERT INTO redirect.clicks (group_id, whatsapp_number_id, ip_address, user_agent, device_type, referrer, clicked_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
   `
-  
+
   return executeRedirectQuery(clickQuery, [
     clickData.groupId,
     numberId,
@@ -200,12 +200,12 @@ export async function getNumbersByGroupIdRedirect(groupId: string) {
 export async function getNumbersRedirect(groupId?: string) {
   let query = `SELECT * FROM redirect.whatsapp_numbers ORDER BY created_at DESC`
   const params: any[] = []
-  
+
   if (groupId) {
     query = `SELECT * FROM redirect.whatsapp_numbers WHERE group_id = $1 ORDER BY created_at DESC`
     params.push(groupId)
   }
-  
+
   return executeRedirectQuery(query, params)
 }
 
@@ -235,7 +235,7 @@ export async function updateNumberRedirect(id: string, updates: any) {
   const fields = Object.keys(updates)
   const values = Object.values(updates)
   const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ')
-  
+
   const query = `
     UPDATE redirect.whatsapp_numbers 
     SET ${setClause}, updated_at = NOW()

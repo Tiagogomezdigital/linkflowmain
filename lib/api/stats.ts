@@ -10,11 +10,11 @@ export async function getGroupStats(): Promise<GroupStats[]> {
 
     const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
     const response = await fetch(`${baseUrl}/api/group-stats`)
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
-    
+
     const result = await response.json()
 
     if (process.env.NODE_ENV !== 'production') {
@@ -23,11 +23,11 @@ export async function getGroupStats(): Promise<GroupStats[]> {
 
     // Extrair os dados corretamente da resposta da API
     const data = result.success ? result.data : []
-    
+
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[${new Date().toISOString()}] 📊 Stats processadas:`, data?.length || 0, 'registros')
     }
-    
+
     return data || []
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {

@@ -125,13 +125,13 @@ export async function getUltraSafeGroupAnalytics(groupId: string) {
           avg_clicks_per_day:
             totalClicks > 0
               ? Math.round(
-                  (totalClicks /
-                    Math.max(
-                      1,
-                      Math.ceil((now.getTime() - new Date(groupInfo.created_at).getTime()) / (1000 * 60 * 60 * 24)),
-                    )) *
-                    100,
-                ) / 100
+                (totalClicks /
+                  Math.max(
+                    1,
+                    Math.ceil((now.getTime() - new Date(groupInfo.created_at).getTime()) / (1000 * 60 * 60 * 24)),
+                  )) *
+                100,
+              ) / 100
               : 0,
           last_click_at: clicks?.[0]?.created_at || null,
         },

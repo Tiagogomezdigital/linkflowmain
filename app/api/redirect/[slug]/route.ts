@@ -62,7 +62,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         deviceType: deviceType,
         referrer: referrer,
       })
-      
+
       if (process.env.NODE_ENV !== "production") {
         console.log("✅ Clique registrado com sucesso!")
       }

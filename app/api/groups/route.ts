@@ -7,10 +7,10 @@ const supabase = supabaseAdmin ?? supabasePublic
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 API /api/groups chamada - usando função RPC')
-    
+
     // Consulta grupos com contagem de números usando função RPC
     const { data: groups, error } = await supabase.rpc('get_groups_with_numbers')
-    
+
     if (error) {
       console.error('❌ Erro na consulta Supabase:', error)
       throw error
@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('❌ Erro na API /api/groups:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Erro interno do servidor' 
+      {
+        success: false,
+        error: 'Erro interno do servidor'
       },
       { status: 500 }
     )

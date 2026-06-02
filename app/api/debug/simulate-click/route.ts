@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { supabaseAdmin, supabasePublic } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase"
 import { registerClick } from "@/lib/api/clicks"
 import { getNextNumber } from "@/lib/api/numbers"
 
-// Seleciona o client com privilégios mais elevados quando disponível
-const supabase = supabaseAdmin ?? supabasePublic
+// Usar apenas cliente admin para segurança do servidor
+const supabase = supabaseAdmin
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)

@@ -1,4 +1,6 @@
-import { supabase } from "../supabase"
+import { supabaseAdmin } from "../supabase"
+
+const supabase = supabaseAdmin
 import type { Click } from "../types"
 
 export async function registerClick(params: {

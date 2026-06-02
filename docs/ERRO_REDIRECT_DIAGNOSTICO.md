@@ -24,7 +24,7 @@ POST | 403 | /rest/v1/rpc/get_next_number | node
 
 ```env
 # Está usando a chave anônima (limitada)
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnbnFodW9vcnNkcnVkdnBiemFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MTI1MDksImV4cCI6MjA2ODE4ODUwOX0.CHykLYD4LEhUVdTsElKzzig1bL5Obcy-doMycAYlRWw
+SUPABASE_SERVICE_ROLE_KEY=sua_chave_anonima_ou_service_role_aqui
 ```
 
 ## Solução Necessária

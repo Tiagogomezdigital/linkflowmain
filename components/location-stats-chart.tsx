@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { createClient } from "@/lib/supabase"
 import { Loader2, Globe, MapPin } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -40,36 +39,20 @@ export function LocationStatsChart({ groupId, startDate, endDate }: LocationStat
         setLoading(true)
         setError(null)
         
-        const supabase = createClient()
+        const params = new URLSearchParams()
+        params.set("chart", "location")
+        if (groupId) params.set("groupId", groupId)
+        if (startDate) params.set("startDate", startDate)
+        if (endDate) params.set("endDate", endDate)
+
+        const response = await fetch(`/api/stats/charts?${params.toString()}`)
+        if (!response.ok) {
+          throw new Error(`Erro ao carregar estatísticas de localização: ${response.status}`)
+        }
         
-        // Buscar estatísticas por país
-        const { data: countryStats, error: countryError } = await supabase.rpc('get_country_stats_v3', {
-          p_group_id: groupId || null,
-          p_start_date: startDate || null,
-          p_end_date: endDate || null
-        })
-
-        if (countryError) {
-          console.error('Erro ao buscar estatísticas de país:', countryError)
-          setError('Erro ao carregar dados de país')
-          return
-        }
-
-        // Buscar estatísticas por localização (país + cidade)
-        const { data: locationStats, error: locationError } = await supabase.rpc('get_location_stats', {
-          p_group_id: groupId || null,
-          p_start_date: startDate || null,
-          p_end_date: endDate || null
-        })
-
-        if (locationError) {
-          console.error('Erro ao buscar estatísticas de localização:', locationError)
-          setError('Erro ao carregar dados de localização')
-          return
-        }
-
-        setCountryData(countryStats || [])
-        setLocationData(locationStats || [])
+        const resData = await response.json()
+        setCountryData(resData.countries || [])
+        setLocationData(resData.locations || [])
       } catch (err) {
         console.error('Erro:', err)
         setError('Erro ao carregar dados')

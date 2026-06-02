@@ -1,4 +1,6 @@
-import { supabase } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase"
+
+const supabase = supabaseAdmin
 import { getTopGroupsByClicks, getDeviceStats as getDeviceStatsRange } from "@/lib/api/stats"
 
 /**

@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabaseAdmin, supabasePublic } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase"
 import { ensureBrazilianCountryCode } from "@/lib/utils"
 import { registerClick } from "@/lib/api/clicks"
 import { getNextNumber } from "@/lib/api/numbers"
 
-const supabase = supabaseAdmin ?? supabasePublic
+const supabase = supabaseAdmin
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {

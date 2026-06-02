@@ -35,7 +35,7 @@ export async function middleware(req: NextRequest) {
     const isErrorRoute = path === "/error"
 
     // Rotas de API públicas
-    const isPublicApiRoute = path.startsWith("/api/stats/filtered") || path.startsWith("/api/auth/") || path.startsWith("/api/database/query") || path.startsWith("/api/numbers") || path.startsWith("/api/groups") || path.startsWith("/api/analytics")
+    const isPublicApiRoute = path.startsWith("/api/auth/")
     
     // Permitir chamadas internas de API (server-side)
     const isInternalApiCall = req.headers.get("user-agent") === "node" && path.startsWith("/api/")

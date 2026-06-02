@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { createClient } from "@/lib/supabase"
 import { Loader2 } from "lucide-react"
 
 interface BrowserStatsProps {
@@ -29,20 +28,18 @@ export function BrowserStatsChart({ groupId, startDate, endDate }: BrowserStatsP
         setLoading(true)
         setError(null)
         
-        const supabase = createClient()
-        
-        const { data: browserStats, error } = await supabase.rpc('get_browser_stats', {
-          p_group_id: groupId || null,
-          p_start_date: startDate || null,
-          p_end_date: endDate || null
-        })
+        const params = new URLSearchParams()
+        params.set("chart", "browser")
+        if (groupId) params.set("groupId", groupId)
+        if (startDate) params.set("startDate", startDate)
+        if (endDate) params.set("endDate", endDate)
 
-        if (error) {
-          console.error('Erro ao buscar estatísticas de navegador:', error)
-          setError('Erro ao carregar dados de navegador')
-          return
+        const response = await fetch(`/api/stats/charts?${params.toString()}`)
+        if (!response.ok) {
+          throw new Error(`Erro ao carregar estatísticas de navegador: ${response.status}`)
         }
-
+        
+        const browserStats = await response.json()
         setData(browserStats || [])
       } catch (err) {
         console.error('Erro:', err)

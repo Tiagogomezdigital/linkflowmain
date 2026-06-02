@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { createClient } from "@/lib/supabase"
 import { Loader2 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -41,36 +40,20 @@ export function UTMStatsChart({ groupId, startDate, endDate }: UTMStatsProps) {
         setLoading(true)
         setError(null)
         
-        const supabase = createClient()
+        const params = new URLSearchParams()
+        params.set("chart", "utm")
+        if (groupId) params.set("groupId", groupId)
+        if (startDate) params.set("startDate", startDate)
+        if (endDate) params.set("endDate", endDate)
+
+        const response = await fetch(`/api/stats/charts?${params.toString()}`)
+        if (!response.ok) {
+          throw new Error(`Erro ao carregar estatísticas UTM: ${response.status}`)
+        }
         
-        // Buscar estatísticas UTM completas
-        const { data: utmStats, error: utmError } = await supabase.rpc('get_utm_stats', {
-          p_group_id: groupId || null,
-          p_start_date: startDate || null,
-          p_end_date: endDate || null
-        })
-
-        if (utmError) {
-          console.error('Erro ao buscar estatísticas UTM:', utmError)
-          setError('Erro ao carregar dados UTM')
-          return
-        }
-
-        // Buscar estatísticas por fonte UTM
-        const { data: sourceStats, error: sourceError } = await supabase.rpc('get_utm_source_stats_v3', {
-          p_group_id: groupId || null,
-          p_start_date: startDate || null,
-          p_end_date: endDate || null
-        })
-
-        if (sourceError) {
-          console.error('Erro ao buscar estatísticas de fonte UTM:', sourceError)
-          setError('Erro ao carregar dados de fonte UTM')
-          return
-        }
-
-        setUtmData(utmStats || [])
-        setSourceData(sourceStats || [])
+        const resData = await response.json()
+        setUtmData(resData.utms || [])
+        setSourceData(resData.sources || [])
       } catch (err) {
         console.error('Erro:', err)
         setError('Erro ao carregar dados')

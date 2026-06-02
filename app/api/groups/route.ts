@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin, supabasePublic } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
-// Usar cliente admin se disponível, senão público
-const supabase = supabaseAdmin ?? supabasePublic
+// Usar exclusivamente o cliente admin no servidor
+const supabase = supabaseAdmin
 
 export async function GET(request: NextRequest) {
   try {

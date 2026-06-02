@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { supabase } from "@/lib/supabase"
 import { Globe } from "lucide-react"
 
 interface CountryStats {
@@ -29,21 +28,18 @@ export function CountryStatsChart({ dateFrom, dateTo, groupIds }: CountryStatsCh
         setLoading(true)
         setError(null)
 
-        const { data: countryData, error: countryError } = await supabase.rpc(
-          "get_country_stats_v3",
-          {
-            p_start_date: dateFrom?.toISOString().split('T')[0] || null,
-            p_end_date: dateTo?.toISOString().split('T')[0] || null,
-            p_group_id: groupIds?.[0] || null, // A função aceita apenas um group_id
-            p_limit: 10
-          }
-        )
+        const params = new URLSearchParams()
+        params.set("chart", "country")
+        if (groupIds?.[0]) params.set("groupId", groupIds[0])
+        if (dateFrom) params.set("startDate", dateFrom.toISOString().split('T')[0])
+        if (dateTo) params.set("endDate", dateTo.toISOString().split('T')[0])
 
-        if (countryError) {
-          console.error("Erro ao buscar estatísticas de país:", countryError)
-          setError("Erro ao carregar dados de país")
-          return
+        const response = await fetch(`/api/stats/charts?${params.toString()}`)
+        if (!response.ok) {
+          throw new Error(`Erro ao carregar estatísticas de país: ${response.status}`)
         }
+
+        const countryData = await response.json()
 
         const formattedData = (countryData || []).map((item: any) => ({
           country: item.calculated_country || "Desconhecido",

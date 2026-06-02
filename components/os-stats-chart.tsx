@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { createClient } from "@/lib/supabase"
 import { Loader2 } from "lucide-react"
 
 interface OSStatsProps {
@@ -29,20 +28,18 @@ export function OSStatsChart({ groupId, startDate, endDate }: OSStatsProps) {
         setLoading(true)
         setError(null)
         
-        const supabase = createClient()
-        
-        const { data: osStats, error } = await supabase.rpc('get_os_stats', {
-          p_group_id: groupId || null,
-          p_start_date: startDate || null,
-          p_end_date: endDate || null
-        })
+        const params = new URLSearchParams()
+        params.set("chart", "os")
+        if (groupId) params.set("groupId", groupId)
+        if (startDate) params.set("startDate", startDate)
+        if (endDate) params.set("endDate", endDate)
 
-        if (error) {
-          console.error('Erro ao buscar estatísticas de OS:', error)
-          setError('Erro ao carregar dados de sistema operacional')
-          return
+        const response = await fetch(`/api/stats/charts?${params.toString()}`)
+        if (!response.ok) {
+          throw new Error(`Erro ao carregar estatísticas de OS: ${response.status}`)
         }
-
+        
+        const osStats = await response.json()
         setData(osStats || [])
       } catch (err) {
         console.error('Erro:', err)

@@ -1,7 +1,3 @@
-import { getSupabaseClient } from "@/lib/supabase";
-
-const supabase = getSupabaseClient();
-
 export interface ReportFilter {
   startDate?: string;
   endDate?: string;
@@ -9,13 +5,25 @@ export interface ReportFilter {
 }
 
 export async function getReportData({ startDate, endDate, groupIds }: ReportFilter) {
-  // Exemplo: busca de cliques filtrados
-  let query = supabase.from("clicks").select("*", { count: "exact" });
-  if (startDate) query = query.gte("created_at", startDate);
-  if (endDate) query = query.lte("created_at", endDate);
-  if (groupIds && groupIds.length) query = query.in("group_id", groupIds);
-  const { data, count } = await query;
-  return { data, count };
+  try {
+    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+    const response = await fetch(`${baseUrl}/api/relatorio/clicks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ startDate, endDate, groupIds })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar dados do relatório: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error("Error in getReportData:", error)
+    return { data: [], count: 0 }
+  }
 }
 
 export function generateCSV(data: any[]): string {

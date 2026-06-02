@@ -125,10 +125,31 @@ if (process.env.NODE_ENV !== 'production') {
 
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const isServer = typeof window === 'undefined'
 
+  if (isServer) {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !serviceKey) {
+      throw new Error("Supabase URL and SUPABASE_SERVICE_ROLE_KEY are required on the server-side")
+    }
+    return createSupabaseClient(supabaseUrl, serviceKey, {
+      global: {
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
+      },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  }
+
+  // Browser Client
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error("Supabase URL and key are required")
+    throw new Error("Supabase URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required on the browser-side")
   }
 
   return createSupabaseClient(supabaseUrl, supabaseKey)

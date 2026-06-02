@@ -1,4 +1,6 @@
-import { supabase } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase"
+
+const supabase = supabaseAdmin
 
 // VERSÃO ULTRA SEGURA - SÓ USA QUERIES SIMPLES
 export async function getUltraSafeGroupAnalytics(groupId: string) {

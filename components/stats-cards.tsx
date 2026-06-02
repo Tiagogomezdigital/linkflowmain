@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Folder, Phone, MousePointer, TrendingUp } from "lucide-react"
-import { getDashboardStats } from "@/lib/api/dashboard"
 
 export function StatsCards() {
   const [stats, setStats] = useState<any>(null)
@@ -17,7 +16,11 @@ export function StatsCards() {
     try {
       setIsLoading(true)
       setError(null)
-      const data = await getDashboardStats()
+      const response = await fetch("/api/dashboard/stats")
+      if (!response.ok) {
+        throw new Error(`Erro ao carregar estatísticas: ${response.status}`)
+      }
+      const data = await response.json()
       setStats(data)
       console.log("Dashboard stats loaded:", data)
     } catch (error: any) {

@@ -1,4 +1,3 @@
-import { supabase, supabasePublic } from "@/lib/supabase"
 import type { GroupStats, DailyStats, DeviceStats, GroupClickStats, Click } from "@/lib/types"
 import { createClient } from "@/lib/supabase"
 
@@ -39,6 +38,26 @@ export async function getGroupStats(): Promise<GroupStats[]> {
 
 export async function getDashboardStats(dateFrom: Date, dateTo: Date, groupIds?: string[]) {
   try {
+    if (typeof window !== 'undefined') {
+      const response = await fetch('/api/stats/dashboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dateFrom: dateFrom.toISOString(),
+          dateTo: dateTo.toISOString(),
+          groupIds: groupIds || []
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erro na resposta da API de dashboard: ${response.statusText}`)
+      }
+
+      return await response.json()
+    }
+
     const supabase = createClient()
 
     // Construir a query base
@@ -118,6 +137,7 @@ export async function getDashboardStats(dateFrom: Date, dateTo: Date, groupIds?:
 export async function debugGroupStats() {
   try {
     console.log("🔍 DEBUG: Testando query direta...")
+    const supabase = createClient()
 
     // Query direta para debug
     const { data: directData, error: directError } = await supabase
@@ -150,6 +170,11 @@ export async function debugGroupStats() {
 
 export async function getDailyStats(dateFrom: Date, dateTo: Date, groupIds?: string[]) {
   try {
+    if (typeof window !== 'undefined') {
+      const filtered = await getFilteredStats(dateFrom, dateTo, groupIds)
+      return filtered.dailyClicks
+    }
+
     const supabase = createClient()
 
     // Construir a query base
@@ -201,6 +226,23 @@ export async function getDailyStats(dateFrom: Date, dateTo: Date, groupIds?: str
 
 export async function getDeviceStats(dateFrom: Date, dateTo: Date, groupIds?: string[]) {
   try {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams()
+      params.set("chart", "device")
+      if (groupIds && groupIds.length > 0) {
+        params.set("groupId", groupIds[0])
+      }
+      params.set("startDate", dateFrom.toISOString())
+      params.set("endDate", dateTo.toISOString())
+
+      const response = await fetch(`/api/stats/charts?${params.toString()}`)
+      if (!response.ok) {
+        throw new Error(`Erro na resposta da API de devices: ${response.statusText}`)
+      }
+
+      return await response.json()
+    }
+
     const supabase = createClient()
 
     // Construir a query base
@@ -243,6 +285,15 @@ export async function getDeviceStats(dateFrom: Date, dateTo: Date, groupIds?: st
 
 export async function getTopGroupsByClicks(dateFrom: Date, dateTo: Date, groupIds?: string[]) {
   try {
+    if (typeof window !== 'undefined') {
+      const filtered = await getFilteredStats(dateFrom, dateTo, groupIds)
+      return filtered.groupClicks.map((g: any) => ({
+        group_id: g.group_id,
+        group_name: g.group_name,
+        clicks: g.clicks
+      }))
+    }
+
     const supabase = createClient()
 
     // Construir a query base
@@ -304,6 +355,7 @@ export async function getGroupStatsById(groupId: string): Promise<GroupStats | n
 // Função para forçar atualização das estatísticas
 export async function refreshGroupStats(): Promise<void> {
   try {
+    const supabase = createClient()
     // Força uma nova consulta das estatísticas
     await supabase.rpc("get_group_stats")
   } catch (error) {

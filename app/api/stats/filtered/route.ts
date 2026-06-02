@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin, supabasePublic } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { executeRedirectQuery } from '@/lib/api/redirect-queries'
 
-// Usar cliente admin se disponível, senão público
-const supabase = supabaseAdmin ?? supabasePublic
+// Usar exclusivamente o cliente admin no servidor
+const supabase = supabaseAdmin
 
 async function processRequest(dateFrom: string, dateTo: string, groupIds?: string[]) {
   if (!dateFrom || !dateTo) {

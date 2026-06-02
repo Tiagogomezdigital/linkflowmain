@@ -1,4 +1,6 @@
-import { supabase } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase"
+
+const supabase = supabaseAdmin
 
 export interface GroupAnalytics {
   total_clicks: number
